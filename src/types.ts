@@ -49,3 +49,20 @@ export interface ScanOptions {
   cleanDocumentNumbers: boolean;
   speedMode: 'fast' | 'precision';
 }
+
+export type UserRole = 'admin' | 'invitado' | 'operador';
+
+export interface AuthUser {
+  id: string;
+  username: string;
+  name: string;
+  role: UserRole;
+  token?: string;
+}
+
+export interface AuthState {
+  user: AuthUser | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+}
+
