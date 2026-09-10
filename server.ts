@@ -216,69 +216,11 @@ app.post('/api/auth/login', (req, res) => {
   }
 });
 
-// Auth: Register Endpoint
+// Auth: Register Endpoint (Disabled - only authorized preconfigured accounts)
 app.post('/api/auth/register', (req, res) => {
-  try {
-    const { username, password, name } = req.body || {};
-    if (!username || !password) {
-      return res.status(400).json({ error: 'El usuario y la contraseña son campos obligatorios.' });
-    }
-
-    const cleanUsername = String(username).trim();
-    const cleanPassword = String(password);
-    const cleanName = name && String(name).trim() ? String(name).trim() : cleanUsername;
-
-    if (cleanUsername.length < 3) {
-      return res.status(400).json({ error: 'El nombre de usuario debe tener al menos 3 caracteres.' });
-    }
-
-    if (cleanPassword.length < 6) {
-      return res.status(400).json({ error: 'La contraseña debe contener al menos 6 caracteres.' });
-    }
-
-    const exists = usersList.some(
-      u => u.username.toLowerCase() === cleanUsername.toLowerCase()
-    );
-
-    if (exists) {
-      return res.status(409).json({ error: `El usuario "${cleanUsername}" ya se encuentra registrado.` });
-    }
-
-    const newUser: AppUser = {
-      id: `usr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-      username: cleanUsername,
-      password: cleanPassword,
-      name: cleanName,
-      role: 'operador',
-      createdAt: new Date().toISOString(),
-    };
-
-    usersList.push(newUser);
-
-    const token = crypto.randomUUID();
-    const sessionData: SessionData = {
-      userId: newUser.id,
-      username: newUser.username,
-      name: newUser.name,
-      role: newUser.role,
-      expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
-    };
-    sessions.set(token, sessionData);
-
-    return res.status(201).json({
-      success: true,
-      token,
-      user: {
-        id: newUser.id,
-        username: newUser.username,
-        name: newUser.name,
-        role: newUser.role,
-      },
-    });
-  } catch (err: any) {
-    console.error('Registration error:', err);
-    return res.status(500).json({ error: 'Error interno en el servidor durante el registro.' });
-  }
+  return res.status(403).json({
+    error: 'El registro de nuevas cuentas está deshabilitado. Inicie sesión únicamente con los usuarios autorizados: Sisvan (Admin) o Invited (Invitado).'
+  });
 });
 
 // Auth: Verify Current Session

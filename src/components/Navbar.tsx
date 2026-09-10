@@ -8,7 +8,6 @@ import {
   Shield, 
   LogOut, 
   LogIn, 
-  UserPlus, 
   Users,
   ChevronDown
 } from 'lucide-react';
@@ -150,18 +149,6 @@ export const Navbar: React.FC<NavbarProps> = ({ hasApiKey }) => {
                 >
                   <LogIn className="w-3.5 h-3.5" />
                   <span>Iniciar Sesión</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAuthModalTab('register');
-                    setIsAuthModalOpen(true);
-                  }}
-                  className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 transition-all hidden sm:inline-flex"
-                >
-                  <UserPlus className="w-3.5 h-3.5 text-slate-600" />
-                  <span>Registrarse</span>
                 </button>
               </div>
             )}
