@@ -337,6 +337,14 @@ app.get('/api/auth/users', (req, res) => {
 // Main PDF / Document Scanner and Transcriber Endpoint
 app.post('/api/scan-pdf', async (req, res) => {
   try {
+    const token = getAuthToken(req);
+    const session = token ? sessions.get(token) : null;
+    if (!session || session.expiresAt < Date.now()) {
+      return res.status(401).json({ 
+        error: 'Acceso no autorizado. Debe iniciar sesión con credenciales válidas para escanear documentos.' 
+      });
+    }
+
     const { fileData, mimeType, fileName, templateHint, speedMode } = req.body;
 
     if (!fileData) {

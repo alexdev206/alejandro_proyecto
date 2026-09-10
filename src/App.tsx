@@ -25,6 +25,7 @@ import { DataTable } from './components/DataTable';
 import { DocumentViewer } from './components/DocumentViewer';
 import { ExportBar } from './components/ExportBar';
 import { AuthModal } from './components/AuthModal';
+import { LoginPage } from './components/LoginPage';
 import { useAuth } from './context/AuthContext';
 import { ScanResult, ScanOptions, ExtractedRow } from './types';
 import { validateAllRows, TEMPLATES } from './utils/validation';
@@ -33,7 +34,7 @@ import { SampleDocument } from './data/samplePdfs';
 import { optimizeFileForUpload } from './utils/imageOptimizer';
 
 export default function App() {
-  const { user, isAuthenticated, isAuthModalOpen, setIsAuthModalOpen, setAuthModalTab, token, login } = useAuth();
+  const { user, isAuthenticated, isLoading, isAuthModalOpen, setIsAuthModalOpen, setAuthModalTab, token, login } = useAuth();
   const [hasApiKey, setHasApiKey] = useState(true);
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -265,6 +266,26 @@ export default function App() {
     setError(null);
   };
 
+  // State: Checking authentication status on initial load
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-white space-y-4">
+        <div className="w-14 h-14 rounded-2xl bg-blue-600 flex items-center justify-center animate-pulse shadow-xl border border-blue-400/30">
+          <FileSpreadsheet className="w-7 h-7 text-white" />
+        </div>
+        <div className="text-center">
+          <p className="text-sm font-bold text-slate-200">Verificando sesión SISVAN...</p>
+          <p className="text-xs text-slate-400 mt-1">Conectando con el servidor en tiempo real</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Enforce login immediately upon entering the link in src
+  if (!isAuthenticated || !user) {
+    return <LoginPage />;
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans">
       <Navbar hasApiKey={hasApiKey} />
@@ -322,99 +343,51 @@ export default function App() {
               </p>
             </div>
 
-            {/* User Session Banner / Quick Login Card */}
-            {isAuthenticated && user ? (
-              <div className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-2xs ${
-                user.role === 'admin'
-                  ? 'bg-indigo-50/70 border-indigo-200 text-indigo-900'
-                  : user.role === 'invitado'
-                  ? 'bg-emerald-50/70 border-emerald-200 text-emerald-900'
-                  : 'bg-blue-50/70 border-blue-200 text-blue-900'
-              }`}>
-                <div className="flex items-center space-x-3">
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                    user.role === 'admin' 
-                      ? 'bg-indigo-600 text-white' 
-                      : user.role === 'invitado' 
-                      ? 'bg-emerald-600 text-white' 
-                      : 'bg-blue-600 text-white'
-                  }`}>
-                    {user.role === 'admin' ? <Shield className="w-4 h-4" /> : <User className="w-4 h-4" />}
-                  </div>
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <span className="font-bold text-slate-900 text-sm">{user.name}</span>
-                      <span className="font-mono text-slate-500">(@{user.username})</span>
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                        user.role === 'admin' ? 'bg-indigo-600 text-white' : user.role === 'invitado' ? 'bg-emerald-600 text-white' : 'bg-blue-600 text-white'
-                      }`}>
-                        {user.role}
-                      </span>
-                    </div>
-                    <p className="text-slate-600 mt-0.5">
-                      {user.role === 'admin'
-                        ? 'Acceso administrativo total: digitalización masiva y control de trazabilidad institucional.'
-                        : user.role === 'invitado'
-                        ? 'Acceso de prueba y demostración: carga tus formatos o explora las muestras de salud pública.'
-                        : 'Acceso de digitador y operador de caracterización.'}
-                    </p>
-                  </div>
+            {/* Active User Session Banner */}
+            <div className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-2xs ${
+              user.role === 'admin'
+                ? 'bg-indigo-50/70 border-indigo-200 text-indigo-900'
+                : user.role === 'invitado'
+                ? 'bg-emerald-50/70 border-emerald-200 text-emerald-900'
+                : 'bg-blue-50/70 border-blue-200 text-blue-900'
+            }`}>
+              <div className="flex items-center space-x-3">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                  user.role === 'admin' 
+                    ? 'bg-indigo-600 text-white' 
+                    : user.role === 'invitado' 
+                    ? 'bg-emerald-600 text-white' 
+                    : 'bg-blue-600 text-white'
+                }`}>
+                  {user.role === 'admin' ? <Shield className="w-4 h-4" /> : <User className="w-4 h-4" />}
                 </div>
-
-                <div className="flex items-center space-x-2 shrink-0">
-                  <span className="inline-flex items-center space-x-1 text-[11px] text-emerald-700 bg-emerald-100/70 px-2 py-1 rounded-md font-medium">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>Conectado a server.ts</span>
-                  </span>
-                </div>
-              </div>
-            ) : (
-              <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="space-y-1">
+                <div>
                   <div className="flex items-center space-x-2">
-                    <KeyRound className="w-4 h-4 text-blue-600" />
-                    <h3 className="font-bold text-sm text-slate-900">
-                      Identificación de Usuario Requerida
-                    </h3>
+                    <span className="font-bold text-slate-900 text-sm">{user.name}</span>
+                    <span className="font-mono text-slate-500">(@{user.username})</span>
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                      user.role === 'admin' ? 'bg-indigo-600 text-white' : user.role === 'invitado' ? 'bg-emerald-600 text-white' : 'bg-blue-600 text-white'
+                    }`}>
+                      {user.role}
+                    </span>
                   </div>
-                  <p className="text-xs text-slate-500">
-                    Ingresa con las credenciales preconfiguradas o crea un registro de operador:
+                  <p className="text-slate-600 mt-0.5">
+                    {user.role === 'admin'
+                      ? 'Acceso administrativo total: digitalización masiva y control de trazabilidad institucional.'
+                      : user.role === 'invitado'
+                      ? 'Acceso de demostración: carga tus formatos o explora las muestras de salud pública.'
+                      : 'Acceso de digitador y operador de caracterización.'}
                   </p>
                 </div>
-
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => login('Sisvan', 'S15van39**')}
-                    className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-50 border border-indigo-200 text-indigo-800 hover:bg-indigo-100 hover:border-indigo-300 transition-all shadow-2xs"
-                  >
-                    <Shield className="w-3.5 h-3.5 text-indigo-600" />
-                    <span>Entrar como Admin (Sisvan)</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => login('Invited', '1nvited39**')}
-                    className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-50 border border-emerald-200 text-emerald-800 hover:bg-emerald-100 hover:border-emerald-300 transition-all shadow-2xs"
-                  >
-                    <User className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>Entrar como Invitado (Invited)</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAuthModalTab('login');
-                      setIsAuthModalOpen(true);
-                    }}
-                    className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700 transition-all shadow-2xs"
-                  >
-                    <LogIn className="w-3.5 h-3.5" />
-                    <span>Otro / Registro</span>
-                  </button>
-                </div>
               </div>
-            )}
+
+              <div className="flex items-center space-x-2 shrink-0">
+                <span className="inline-flex items-center space-x-1 text-[11px] text-emerald-700 bg-emerald-100/70 px-2.5 py-1 rounded-md font-medium">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Sesión activa verificada en server.ts</span>
+                </span>
+              </div>
+            </div>
 
             <UploadZone
               onFileSelected={handleFileSelected}
