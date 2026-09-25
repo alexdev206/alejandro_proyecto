@@ -25,6 +25,7 @@ interface DataTableProps {
   documentTitle: string;
   selectedFieldFilter?: string | null;
   onSelectFieldFilter?: (colKey: string | null) => void;
+  onTriggerToast?: (msg: string) => void;
 }
 
 export const DataTable: React.FC<DataTableProps> = ({
@@ -34,6 +35,7 @@ export const DataTable: React.FC<DataTableProps> = ({
   documentTitle,
   selectedFieldFilter = null,
   onSelectFieldFilter,
+  onTriggerToast,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [onlyReview, setOnlyReview] = useState(false);
@@ -92,12 +94,23 @@ export const DataTable: React.FC<DataTableProps> = ({
 
     onRowsChange(updated);
     setEditingCell(null);
+    if (onTriggerToast) onTriggerToast('✏️ Celda actualizada con éxito.');
   };
 
-  const handleDeleteRow = (rowId: string) => {
-    if (window.confirm('¿Seguro que deseas eliminar esta fila?')) {
+  const handleDeleteRow = (rowId: string, rowNum?: number) => {
+    const displayNum = rowNum || rows.find(r => r.id === rowId)?.rowNumber;
+    if (window.confirm(`¿Confirmas eliminar la fila #${displayNum}?`)) {
       const updated = rows.filter(r => r.id !== rowId).map((r, i) => ({ ...r, rowNumber: i + 1 }));
       onRowsChange(updated);
+      if (onTriggerToast) onTriggerToast(`🗑️ Fila #${displayNum} eliminada.`);
+    }
+  };
+
+  const handleClearAllRows = () => {
+    if (rows.length === 0) return;
+    if (window.confirm('¿Confirmas que deseas eliminar todas las filas de la matriz actual? Esta acción no se puede deshacer.')) {
+      onRowsChange([]);
+      if (onTriggerToast) onTriggerToast('🗑️ Todas las filas han sido eliminadas.');
     }
   };
 
@@ -116,12 +129,14 @@ export const DataTable: React.FC<DataTableProps> = ({
     };
 
     onRowsChange([...rows, newRow]);
+    if (onTriggerToast) onTriggerToast(`➕ Nueva fila #${rows.length + 1} agregada a la matriz.`);
   };
 
   const handleSaveInspectedRow = (updatedRow: ExtractedRow) => {
     const updated = rows.map(r => r.id === updatedRow.id ? updatedRow : r);
     onRowsChange(updated);
     setInspectedRow(updatedRow);
+    if (onTriggerToast) onTriggerToast('✅ Ficha clínica del paciente guardada.');
   };
 
   return (
@@ -181,17 +196,28 @@ export const DataTable: React.FC<DataTableProps> = ({
             )}
           </div>
 
-          <div className="flex items-center space-x-3 text-xs text-slate-600">
-            <span className="font-medium font-mono">
+          <div className="flex items-center space-x-2 text-xs text-slate-600">
+            <span className="font-medium font-mono mr-1">
               <b>{filteredRows.length}</b> de <b>{rows.length}</b> filas
             </span>
             <button
               type="button"
               onClick={handleAddRow}
               className="inline-flex items-center space-x-1 px-2.5 py-1.5 bg-white border border-slate-300 hover:bg-slate-100 rounded-lg font-medium text-slate-700 shadow-2xs cursor-pointer"
+              title="Agregar un nuevo renglón vacío"
             >
               <Plus className="w-3.5 h-3.5 text-blue-600" />
               <span>Agregar fila</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleClearAllRows}
+              disabled={rows.length === 0}
+              className="inline-flex items-center space-x-1 px-2.5 py-1.5 bg-white border border-rose-200 hover:bg-rose-50 text-rose-700 rounded-lg font-medium shadow-2xs transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              title="Eliminar todas las filas de la tabla"
+            >
+              <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+              <span>Vaciar</span>
             </button>
           </div>
         </div>
@@ -348,9 +374,9 @@ export const DataTable: React.FC<DataTableProps> = ({
                       <td className="px-2 py-2 text-center">
                         <button
                           type="button"
-                          onClick={() => handleDeleteRow(row.id)}
-                          className="p-1 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors cursor-pointer"
-                          title="Eliminar fila"
+                          onClick={() => handleDeleteRow(row.id, row.rowNumber)}
+                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                          title={`Eliminar fila #${row.rowNumber}`}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>

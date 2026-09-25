@@ -94,11 +94,45 @@ export const PatientsDirectoryView: React.FC<PatientsDirectoryViewProps> = ({
     onTriggerToast('✅ Ficha del paciente actualizada.');
   };
 
+  const handleAddPatient = () => {
+    const newId = `pat-${Date.now()}`;
+    const newDoc = window.prompt('Ingresa el número de documento del nuevo paciente:');
+    if (!newDoc || !newDoc.trim()) return;
+
+    const newPatient: ExtractedRow = {
+      id: newId,
+      rowNumber: 1,
+      pageNumber: 1,
+      data: {
+        num_identificacion: newDoc.trim(),
+        tipo_identificacion: '4',
+        primer_nombre: 'NUEVO',
+        primer_apellido: 'PACIENTE',
+        edad: '',
+        sexo: '',
+        eps: 'PENDIENTE',
+        observaciones: 'Ingresado manualmente al directorio'
+      },
+      validation: {},
+      reviewFlags: []
+    };
+
+    const updated = [newPatient, ...rows].map((r, i) => ({ ...r, rowNumber: i + 1 }));
+    onUpdateRows(updated);
+    setInspectedRow(newPatient);
+    onTriggerToast(`➕ Paciente ${newDoc.trim()} agregado. Abre su ficha para completar información.`);
+  };
+
   const handleDeletePatient = (id: string) => {
-    if (window.confirm('¿Seguro que deseas eliminar este registro de paciente?')) {
+    const target = rows.find(r => r.id === id);
+    const doc = target?.data?.num_identificacion || target?.data?.documento || '';
+    const name = `${target?.data?.primer_nombre || ''} ${target?.data?.primer_apellido || ''}`.trim();
+    const label = doc ? `${doc} (${name || 'Paciente'})` : 'este paciente';
+
+    if (window.confirm(`¿Confirmas que deseas eliminar a ${label} del directorio?`)) {
       const updated = rows.filter(r => r.id !== id).map((r, i) => ({ ...r, rowNumber: i + 1 }));
       onUpdateRows(updated);
-      onTriggerToast('Registro eliminado.');
+      onTriggerToast(`🗑️ Paciente eliminado del directorio.`);
     }
   };
 
@@ -146,6 +180,16 @@ export const PatientsDirectoryView: React.FC<PatientsDirectoryViewProps> = ({
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={handleAddPatient}
+              className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer"
+              title="Registrar manualmente un nuevo paciente al directorio"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Agregar Paciente</span>
+            </button>
+
             <button
               type="button"
               onClick={handleExportDirectoryExcel}

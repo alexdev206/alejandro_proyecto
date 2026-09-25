@@ -33,6 +33,8 @@ interface NavbarProps {
   activeView?: AppModule;
   onSelectView?: (view: any) => void;
   scanResultCount?: number;
+  shiftSeconds?: number;
+  formatShiftTime?: (sec: number) => string;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ 
@@ -42,6 +44,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   activeView,
   onSelectView,
   scanResultCount = 0,
+  shiftSeconds,
+  formatShiftTime,
 }) => {
   const currentMod: AppModule = activeModule || activeView || 'scanner';
   const handleSelect = (mod: AppModule) => {
@@ -167,87 +171,117 @@ export const Navbar: React.FC<NavbarProps> = ({
             <div>
               <div className="flex items-center space-x-2">
                 <h1 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
-                  Escáner y Transcriptor de PDF a CSV
+                  SISVAN & SISVESO
                 </h1>
                 <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-                  IA Multimodal
+                  Subred Sur · SDS
                 </span>
               </div>
               <p className="text-xs text-slate-500 hidden sm:block">
-                Digitalización, lectura manuscrita y exportación estructurada automática
+                Digitalización multimodal, consultas PAIWEB / ADRES y directorio nominal
               </p>
             </div>
           </div>
 
-          {/* Top Bar Zone 2: Navigation Links */}
-          <nav className="hidden xl:flex items-center space-x-1 bg-slate-100/80 p-1 rounded-xl border border-slate-200">
+          {/* Top Bar Zone 2: Navigation Links (Desktop lg+) */}
+          <nav className="hidden lg:flex items-center space-x-1 bg-slate-100/90 p-1 rounded-xl border border-slate-200">
             <button
               type="button"
               onClick={() => handleSelect('scanner')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 currentMod === 'scanner'
-                  ? 'bg-white text-blue-700 shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-blue-600 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
             >
-              1. Escáner OCR
+              <FileSpreadsheet className="w-3.5 h-3.5" />
+              <span>1. Escáner OCR</span>
             </button>
 
             <button
               type="button"
               onClick={() => handleSelect('table')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 currentMod === 'table'
-                  ? 'bg-white text-emerald-700 shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-emerald-600 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
             >
-              2. Matriz de Datos
+              <TableIcon className="w-3.5 h-3.5" />
+              <span>2. Matriz de Datos</span>
+              {scanResultCount > 0 && (
+                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
+                  currentMod === 'table' ? 'bg-emerald-800 text-emerald-100' : 'bg-emerald-100 text-emerald-800'
+                }`}>
+                  {scanResultCount}
+                </span>
+              )}
             </button>
 
             <button
               type="button"
               onClick={() => handleSelect('consulta_pai_adres')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 currentMod === 'consulta_pai_adres'
-                  ? 'bg-[#7e22ce] text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-purple-700 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
             >
-              3. PAI / ADRES
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span>3. PAI, ADRES & Comprobador</span>
+              <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
+                currentMod === 'consulta_pai_adres' ? 'bg-purple-900 text-purple-200' : 'bg-purple-100 text-purple-800'
+              }`}>
+                383
+              </span>
             </button>
 
             <button
               type="button"
               onClick={() => handleSelect('patients')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 currentMod === 'patients'
-                  ? 'bg-white text-cyan-700 shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-cyan-700 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
             >
-              4. Directorio
+              <Users className="w-3.5 h-3.5" />
+              <span>4. Directorio</span>
             </button>
 
             <button
               type="button"
               onClick={() => handleSelect('audit')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 currentMod === 'audit'
-                  ? 'bg-white text-amber-700 shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-slate-900 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
             >
-              5. Control & Turno
+              <Activity className="w-3.5 h-3.5" />
+              <span>5. Control & Turno</span>
             </button>
           </nav>
 
           <div className="flex items-center space-x-2 sm:space-x-3">
-            <div className={`hidden md:flex items-center space-x-1.5 px-2.5 py-1 rounded-md text-xs font-medium ${
+            {/* Shift timer badge if authenticated */}
+            {isAuthenticated && shiftSeconds !== undefined && formatShiftTime && (
+              <button
+                type="button"
+                onClick={() => handleSelect('audit')}
+                className="hidden md:inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-lg text-xs font-mono font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 transition-colors cursor-pointer"
+                title="Tiempo de turno actual. Haz clic para ver detalles del turno."
+              >
+                <Clock className="w-3.5 h-3.5 text-blue-600" />
+                <span>{formatShiftTime(shiftSeconds)}</span>
+              </button>
+            )}
+
+            <div className={`hidden sm:flex items-center space-x-1.5 px-2.5 py-1 rounded-md text-xs font-medium ${
               hasApiKey ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'
             }`}>
               <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-              <span>{hasApiKey ? 'Gemini Conectado' : 'Sin Clave API'}</span>
+              <span>{hasApiKey ? 'IA Conectada' : 'Sin Clave'}</span>
             </div>
 
             {/* Authentication Bar */}
@@ -336,6 +370,84 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </button>
               </div>
             )}
+          </div>
+        </div>
+
+        {/* Responsive Mobile / Tablet Module Navigation Subbar */}
+        <div className="lg:hidden border-t border-slate-200 bg-slate-50/95 px-4 py-2 overflow-x-auto scrollbar-none">
+          <div className="flex items-center space-x-1.5 min-w-max">
+            <button
+              type="button"
+              onClick={() => handleSelect('scanner')}
+              className={`inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                currentMod === 'scanner'
+                  ? 'bg-blue-600 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 bg-white border border-slate-200'
+              }`}
+            >
+              <FileSpreadsheet className="w-3 h-3" />
+              <span>1. Escáner</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleSelect('table')}
+              className={`inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                currentMod === 'table'
+                  ? 'bg-emerald-600 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 bg-white border border-slate-200'
+              }`}
+            >
+              <TableIcon className="w-3 h-3" />
+              <span>2. Matriz</span>
+              {scanResultCount > 0 && (
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-emerald-100 text-emerald-800">
+                  {scanResultCount}
+                </span>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleSelect('consulta_pai_adres')}
+              className={`inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                currentMod === 'consulta_pai_adres'
+                  ? 'bg-purple-700 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 bg-white border border-slate-200'
+              }`}
+            >
+              <ShieldCheck className="w-3 h-3" />
+              <span>3. PAI & ADRES</span>
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-purple-100 text-purple-800">
+                383
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleSelect('patients')}
+              className={`inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                currentMod === 'patients'
+                  ? 'bg-cyan-700 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 bg-white border border-slate-200'
+              }`}
+            >
+              <Users className="w-3 h-3" />
+              <span>4. Directorio</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleSelect('audit')}
+              className={`inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                currentMod === 'audit'
+                  ? 'bg-slate-900 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 bg-white border border-slate-200'
+              }`}
+            >
+              <Activity className="w-3 h-3" />
+              <span>5. Control</span>
+            </button>
           </div>
         </div>
       </header>

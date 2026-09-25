@@ -27,7 +27,6 @@ import { DocumentViewer } from './components/DocumentViewer';
 import { ExportBar } from './components/ExportBar';
 import { AuthModal } from './components/AuthModal';
 import { LoginPage } from './components/LoginPage';
-import { ModuleBannerHub } from './components/ModuleBannerHub';
 import { ConsultaPaiAdresView } from './components/ConsultaPaiAdresView';
 import { PatientsDirectoryView } from './components/PatientsDirectoryView';
 import { AuditControlView } from './components/AuditControlView';
@@ -284,7 +283,27 @@ export default function App() {
   };
 
   const handleRowsChange = (updatedRows: ExtractedRow[]) => {
-    if (!scanResult) return;
+    setDatabaseRows(updatedRows);
+    if (!scanResult) {
+      if (updatedRows.length > 0) {
+        setScanResult({
+          documentTitle: 'Base de Datos Clínica',
+          detectedTemplate: 'SISVAN',
+          templateName: 'Matriz Clínica',
+          columns: Object.keys(updatedRows[0].data || {}).map(k => ({ key: k, label: k, required: false, type: 'text' })),
+          rows: updatedRows,
+          totalPages: 1,
+          summary: {
+            totalRows: updatedRows.length,
+            validRows: updatedRows.length,
+            reviewNeededCount: 0,
+            illegibleCount: 0,
+          }
+        });
+      }
+      return;
+    }
+
     let reviewCount = 0;
     let illegibleCount = 0;
     updatedRows.forEach(row => {
@@ -407,6 +426,8 @@ export default function App() {
         activeModule={activeModule}
         onSelectModule={setActiveModule}
         scanResultCount={scanResult?.rows.length || 0}
+        shiftSeconds={shiftSeconds}
+        formatShiftTime={formatShiftTime}
       />
 
       {/* Floating Toast Notification */}
@@ -419,25 +440,6 @@ export default function App() {
 
       {/* 2. MAIN WORKSPACE */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-        {/* EXECUTIVE MODULE BANNER HUB & FIELD ACCESS RIBBON */}
-        <ModuleBannerHub
-          activeModule={activeModule}
-          onSelectModule={setActiveModule}
-          userRole={user.role}
-          userName={user.name || user.username}
-          scanResult={scanResult}
-          shiftSeconds={shiftSeconds}
-          formatShiftTime={formatShiftTime}
-          selectedFieldFilter={selectedFieldFilter}
-          onSelectFieldFilter={setSelectedFieldFilter}
-          onOpenFieldInspector={handleOpenFieldInspector}
-          onLoadQuickSample={handleQuickLoadDefaultSample}
-          onDownloadCsv={handleDownloadCsvClick}
-          onDownloadExcel={handleDownloadExcelClick}
-          speedMode={options.speedMode}
-          onToggleSpeedMode={handleToggleSpeedMode}
-        />
-
         {/* Global Error Banner if present */}
         {error && (
           <div className="bg-rose-50 border border-rose-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-rose-800 text-sm shadow-xs">
@@ -479,6 +481,45 @@ export default function App() {
             exit={{ opacity: 0, y: -6 }}
             className="space-y-6"
           >
+            {/* Clean Institutional Header */}
+            <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <div className="flex items-center space-x-2">
+                  <span className="px-2.5 py-0.5 rounded text-xs font-bold bg-blue-100 text-blue-800 border border-blue-200 font-mono">
+                    MÓDULO 01
+                  </span>
+                  <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+                    Digitalizador & Escáner OCR Inteligente
+                  </h2>
+                </div>
+                <p className="text-xs sm:text-sm text-slate-500 max-w-2xl">
+                  Sube planillas manuscritas, fotos de visitas o documentos PDF escaneados. El motor IA extraerá y validará las columnas clínicas automáticamente.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={handleQuickLoadDefaultSample}
+                  className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-xs transition-colors cursor-pointer"
+                  title="Cargar muestra oficial SISVAN preconfigurada"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                  <span>Cargar Muestra SISVAN</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleToggleSpeedMode}
+                  className="inline-flex items-center space-x-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold border border-slate-200 transition-colors cursor-pointer"
+                  title="Alternar entre modo rápido y alta precisión"
+                >
+                  <Zap className="w-3.5 h-3.5 text-amber-500" />
+                  <span>Modo: {options.speedMode === 'precision' ? '3.8 Alta Precisión' : '3.1 Rápido'}</span>
+                </button>
+              </div>
+            </div>
+
             {isScanning ? (
               <ScanningProgress 
                 fileName={uploadedFile?.name} 
@@ -602,6 +643,59 @@ export default function App() {
                   onOpenConsultaPaiAdres={() => setActiveModule('consulta_pai_adres')}
                 />
 
+                {/* Column Quick Focus Bar */}
+                {scanResult.columns.length > 0 && (
+                  <div className="bg-white border border-slate-200/90 rounded-xl p-3 shadow-2xs">
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <div className="flex items-center space-x-1.5">
+                        <SlidersHorizontal className="w-3.5 h-3.5 text-blue-600" />
+                        <span className="text-xs font-bold text-slate-700">Enfocar Campo Clínico:</span>
+                        <span className="text-[11px] text-slate-400 hidden sm:inline">
+                          (Haz clic en un campo para resaltarlo en la matriz)
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <button
+                          type="button"
+                          onClick={handleOpenFieldInspector}
+                          className="inline-flex items-center space-x-1 text-xs font-bold text-blue-700 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-2 py-0.5 rounded cursor-pointer"
+                        >
+                          <Eye className="w-3 h-3" />
+                          <span>Ficha de Paciente</span>
+                        </button>
+                        {selectedFieldFilter && (
+                          <button
+                            type="button"
+                            onClick={() => setSelectedFieldFilter(null)}
+                            className="text-[11px] font-semibold text-slate-500 hover:text-slate-800 underline cursor-pointer"
+                          >
+                            Mostrar todos
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                      {scanResult.columns.map((col) => {
+                        const isSelected = selectedFieldFilter === col.key;
+                        return (
+                          <button
+                            key={col.key}
+                            type="button"
+                            onClick={() => setSelectedFieldFilter(isSelected ? null : col.key)}
+                            className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                              isSelected
+                                ? 'bg-blue-600 text-white shadow-xs'
+                                : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                            }`}
+                          >
+                            <span>{col.label || col.key}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 {/* Main Views */}
                 {viewMode === 'table' && (
                   <DataTable
@@ -611,6 +705,7 @@ export default function App() {
                     documentTitle={scanResult.documentTitle}
                     selectedFieldFilter={selectedFieldFilter}
                     onSelectFieldFilter={setSelectedFieldFilter}
+                    onTriggerToast={triggerToast}
                   />
                 )}
 
@@ -631,6 +726,7 @@ export default function App() {
                         documentTitle={scanResult.documentTitle}
                         selectedFieldFilter={selectedFieldFilter}
                         onSelectFieldFilter={setSelectedFieldFilter}
+                        onTriggerToast={triggerToast}
                       />
                     </div>
                   </div>

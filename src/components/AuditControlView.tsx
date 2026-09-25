@@ -497,10 +497,11 @@ export const AuditControlView: React.FC<AuditControlViewProps> = ({
                       <button
                         type="button"
                         onClick={() => handleDeleteUser(u.id, u.username)}
-                        className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                        title="Eliminar usuario"
+                        className="inline-flex items-center space-x-1 px-2.5 py-1 text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+                        title={`Eliminar usuario ${u.username}`}
                       >
                         <Trash2 className="w-3.5 h-3.5" />
+                        <span>Eliminar</span>
                       </button>
                     )}
                   </div>
