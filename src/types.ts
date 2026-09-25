@@ -87,6 +87,8 @@ export interface AuthUser {
   token?: string;
 }
 
+export type AppModule = 'scanner' | 'table' | 'consulta_pai_adres' | 'patients' | 'audit';
+
 export interface AuthState {
   user: AuthUser | null;
   isAuthenticated: boolean;

@@ -22,19 +22,32 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { getRolePermissions } from '../types';
+import { getRolePermissions, AppModule } from '../types';
+import { Table as TableIcon } from 'lucide-react';
 
 interface NavbarProps {
   hasApiKey: boolean;
-  activeView?: 'scanner' | 'consulta_pai_adres';
-  onSelectView?: (view: 'scanner' | 'consulta_pai_adres') => void;
+  activeModule?: AppModule;
+  onSelectModule?: (module: AppModule) => void;
+  // Backward compatibility
+  activeView?: AppModule;
+  onSelectView?: (view: any) => void;
+  scanResultCount?: number;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ 
   hasApiKey, 
-  activeView = 'scanner', 
-  onSelectView 
+  activeModule, 
+  onSelectModule,
+  activeView,
+  onSelectView,
+  scanResultCount = 0,
 }) => {
+  const currentMod: AppModule = activeModule || activeView || 'scanner';
+  const handleSelect = (mod: AppModule) => {
+    if (onSelectModule) onSelectModule(mod);
+    else if (onSelectView) onSelectView(mod);
+  };
   const { user, isAuthenticated, logout, setIsAuthModalOpen, setAuthModalTab, token } = useAuth();
   const permissions = getRolePermissions(user?.role);
 
@@ -166,39 +179,68 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           </div>
 
-          {/* Navigation Views Switcher */}
-          {onSelectView && (
-            <div className="hidden lg:flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200">
-              <button
-                type="button"
-                onClick={() => onSelectView('scanner')}
-                className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  activeView === 'scanner'
-                    ? 'bg-white text-blue-700 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <FileSpreadsheet className="w-3.5 h-3.5" />
-                <span>Escáner PDF / Tablas</span>
-              </button>
+          {/* Top Bar Zone 2: Navigation Links */}
+          <nav className="hidden xl:flex items-center space-x-1 bg-slate-100/80 p-1 rounded-xl border border-slate-200">
+            <button
+              type="button"
+              onClick={() => handleSelect('scanner')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                currentMod === 'scanner'
+                  ? 'bg-white text-blue-700 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              1. Escáner OCR
+            </button>
 
-              <button
-                type="button"
-                onClick={() => onSelectView('consulta_pai_adres')}
-                className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  activeView === 'consulta_pai_adres'
-                    ? 'bg-[#7e22ce] text-white shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <ShieldCheck className="w-3.5 h-3.5" />
-                <span>Consulta PAI / ADRES</span>
-                <span className="ml-1 px-1.5 py-0.2 rounded text-[10px] bg-purple-100 text-purple-800 font-extrabold uppercase">
-                  SISVAN
-                </span>
-              </button>
-            </div>
-          )}
+            <button
+              type="button"
+              onClick={() => handleSelect('table')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                currentMod === 'table'
+                  ? 'bg-white text-emerald-700 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              2. Matriz de Datos
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleSelect('consulta_pai_adres')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                currentMod === 'consulta_pai_adres'
+                  ? 'bg-[#7e22ce] text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              3. PAI / ADRES
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleSelect('patients')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                currentMod === 'patients'
+                  ? 'bg-white text-cyan-700 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              4. Directorio
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleSelect('audit')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                currentMod === 'audit'
+                  ? 'bg-white text-amber-700 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              5. Control & Turno
+            </button>
+          </nav>
 
           <div className="flex items-center space-x-2 sm:space-x-3">
             <div className={`hidden md:flex items-center space-x-1.5 px-2.5 py-1 rounded-md text-xs font-medium ${
