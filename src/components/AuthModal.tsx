@@ -96,6 +96,58 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
         {/* Modal Body */}
         <div className="p-6 space-y-4">
+          {/* Quick Access Credentials Cards */}
+          <div className="space-y-1.5">
+            <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+              <span>Selecciona un perfil:</span>
+              <span className="text-blue-600 font-normal">Autocompletar</span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setLoginUsername('admin');
+                  setLoginPassword('admin26');
+                  setError(null);
+                }}
+                className={`p-2 rounded-lg border text-left transition-all cursor-pointer ${
+                  loginUsername === 'admin'
+                    ? 'border-indigo-500 bg-indigo-50 ring-1 ring-indigo-400'
+                    : 'border-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                <div className="text-xs font-bold text-indigo-950 flex items-center space-x-1">
+                  <span>👑 Admin</span>
+                </div>
+                <div className="text-[10px] font-mono text-indigo-700 mt-0.5">
+                  admin / admin26
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setLoginUsername('usuario');
+                  setLoginPassword('usuario26');
+                  setError(null);
+                }}
+                className={`p-2 rounded-lg border text-left transition-all cursor-pointer ${
+                  loginUsername === 'usuario'
+                    ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-400'
+                    : 'border-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                <div className="text-xs font-bold text-blue-950 flex items-center space-x-1">
+                  <span>👤 Usuario</span>
+                </div>
+                <div className="text-[10px] font-mono text-blue-700 mt-0.5">
+                  usuario / usuario26
+                </div>
+              </button>
+            </div>
+          </div>
+
           {/* Error Banner */}
           {error && (
             <div className="bg-rose-50 border border-rose-200 rounded-xl p-3 flex items-start space-x-2 text-xs text-rose-700 animate-in fade-in">

@@ -75,6 +75,68 @@ export const LoginPage: React.FC = () => {
           
           {/* Form Area */}
           <div className="p-6">
+            {/* Quick Access Credentials Cards */}
+            <div className="mb-5 space-y-2">
+              <div className="text-[11px] font-bold text-slate-600 uppercase tracking-wider flex items-center justify-between">
+                <span>Selecciona tu perfil de acceso:</span>
+                <span className="text-[10px] text-blue-600 font-normal">Clic para autocompletar</span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2.5">
+                {/* Admin Card */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLoginUsername('admin');
+                    setLoginPassword('admin26');
+                    setError(null);
+                  }}
+                  className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                    loginUsername === 'admin'
+                      ? 'border-indigo-500 bg-indigo-50/80 ring-2 ring-indigo-400'
+                      : 'border-slate-200 hover:border-indigo-300 hover:bg-slate-50'
+                  }`}
+                >
+                  <div className="flex items-center space-x-1.5">
+                    <span className="text-sm">👑</span>
+                    <span className="text-xs font-bold text-indigo-950">Rol Admin</span>
+                  </div>
+                  <div className="text-[11px] font-mono text-indigo-700 mt-1">
+                    admin / admin26
+                  </div>
+                  <div className="text-[10px] text-slate-500 mt-0.5 line-clamp-1">
+                    Control total, usuarios, scripts IA
+                  </div>
+                </button>
+
+                {/* Usuario Card */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLoginUsername('usuario');
+                    setLoginPassword('usuario26');
+                    setError(null);
+                  }}
+                  className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                    loginUsername === 'usuario' || loginUsername === 'user'
+                      ? 'border-blue-500 bg-blue-50/80 ring-2 ring-blue-400'
+                      : 'border-slate-200 hover:border-blue-300 hover:bg-slate-50'
+                  }`}
+                >
+                  <div className="flex items-center space-x-1.5">
+                    <span className="text-sm">👤</span>
+                    <span className="text-xs font-bold text-blue-950">Rol Usuario</span>
+                  </div>
+                  <div className="text-[11px] font-mono text-blue-700 mt-1">
+                    usuario / usuario26
+                  </div>
+                  <div className="text-[10px] text-slate-500 mt-0.5 line-clamp-1">
+                    Modo digitador, turno, alertas
+                  </div>
+                </button>
+              </div>
+            </div>
+
             {error && (
               <div className="mb-4 bg-rose-50 border border-rose-200 rounded-xl p-3 flex items-start space-x-2 text-xs text-rose-700 animate-in fade-in">
                 <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />

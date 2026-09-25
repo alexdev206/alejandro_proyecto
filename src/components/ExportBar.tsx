@@ -7,7 +7,8 @@ import {
   RotateCcw, 
   Share2,
   FileDown,
-  Sparkles
+  Sparkles,
+  ShieldCheck
 } from 'lucide-react';
 import { ColumnDefinition, ExtractedRow, ScanOptions } from '../types';
 import { downloadCsv, downloadExcel, generateCsvContent } from '../utils/export';
@@ -19,6 +20,7 @@ interface ExportBarProps {
   options: ScanOptions;
   onOptionsChange: (newOptions: ScanOptions) => void;
   onReset: () => void;
+  onOpenConsultaPaiAdres?: () => void;
 }
 
 export const ExportBar: React.FC<ExportBarProps> = ({
@@ -28,6 +30,7 @@ export const ExportBar: React.FC<ExportBarProps> = ({
   options,
   onOptionsChange,
   onReset,
+  onOpenConsultaPaiAdres,
 }) => {
   const [copied, setCopied] = useState(false);
 
@@ -89,6 +92,19 @@ export const ExportBar: React.FC<ExportBarProps> = ({
           {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4 text-slate-500" />}
           <span>{copied ? '¡Copiado!' : 'Copiar (TSV)'}</span>
         </button>
+
+        {onOpenConsultaPaiAdres && (
+          <button
+            type="button"
+            id="btn-open-pai-adres"
+            onClick={onOpenConsultaPaiAdres}
+            className="inline-flex items-center space-x-1.5 px-3.5 py-2.5 bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-200 rounded-lg font-bold text-xs sm:text-sm transition-colors cursor-pointer"
+            title="Validar estos pacientes en el módulo PAI / ADRES"
+          >
+            <ShieldCheck className="w-4 h-4 text-purple-700" />
+            <span>Consultar en PAI / ADRES</span>
+          </button>
+        )}
       </div>
 
       {/* Right: Delimiter & New Document */}

@@ -133,3 +133,67 @@ export function downloadExcel(
 
   XLSX.writeFile(wb, filename);
 }
+
+/**
+ * Downloads a specialized Shift Delivery Report for Operators
+ */
+export function downloadShiftReport(
+  operatorName: string,
+  role: string,
+  docsCount: number,
+  rowsCount: number,
+  shiftDuration: string,
+  columns: ColumnDefinition[],
+  rows: ExtractedRow[]
+) {
+  const wb = XLSX.utils.book_new();
+
+  // 1. Shift Summary Sheet
+  const summaryData = [
+    ['ACTA DE ENTREGA DE TURNO — DIGITADOR SISVAN'],
+    ['Subred Integrada de Servicios de Salud Sur E.S.E.'],
+    [],
+    ['Operador / Responsable:', operatorName],
+    ['Rol en Sistema:', role.toUpperCase()],
+    ['Fecha de Entrega:', new Date().toLocaleDateString('es-CO')],
+    ['Hora de Cierre:', new Date().toLocaleTimeString('es-CO')],
+    ['Duración de la Jornada:', shiftDuration],
+    ['Documentos Procesados:', docsCount],
+    ['Total Pacientes / Filas Transcritas:', rowsCount],
+    [],
+    ['ESTADO DE CALIDAD DE DIGITACIÓN:'],
+    ['Filas 100% Válidas:', rows.filter(r => !r.reviewFlags || r.reviewFlags.length === 0).length],
+    ['Filas con Alertas Pendientes:', rows.filter(r => r.reviewFlags && r.reviewFlags.length > 0).length],
+    [],
+    ['FIRMA DE CONFORMIDAD:'],
+    ['Firma Digital:', `CERT-SISVAN-${Date.now().toString(36).toUpperCase()}`],
+  ];
+
+  const summaryWs = XLSX.utils.aoa_to_sheet(summaryData);
+  summaryWs['!cols'] = [{ wch: 35 }, { wch: 45 }];
+  XLSX.utils.book_append_sheet(wb, summaryWs, 'Resumen de Turno');
+
+  // 2. Extracted Data Sheet if available
+  if (columns.length > 0 && rows.length > 0) {
+    const headers = ['N°', ...columns.map(c => c.label || c.key), 'ESTADO_REVISION'];
+    const aoa: any[][] = [headers];
+
+    rows.forEach((row, idx) => {
+      const flagged = row.reviewFlags && row.reviewFlags.length > 0 ? row.reviewFlags.join('; ') : 'OK';
+      aoa.push([
+        idx + 1,
+        ...columns.map(c => row.data[c.key] ?? ''),
+        flagged
+      ]);
+    });
+
+    const dataWs = XLSX.utils.aoa_to_sheet(aoa);
+    dataWs['!cols'] = headers.map(h => ({ wch: Math.min(30, Math.max(12, h.length + 2)) }));
+    XLSX.utils.book_append_sheet(wb, dataWs, 'Lote_Procesado');
+  }
+
+  const cleanOperator = operatorName.toLowerCase().replace(/[^a-z0-9]/g, '_');
+  const filename = `entrega_turno_${cleanOperator}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+  XLSX.writeFile(wb, filename);
+}
+

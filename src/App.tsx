@@ -16,7 +16,13 @@ import {
   User,
   LogIn,
   KeyRound,
-  UserCheck
+  UserCheck,
+  Crown,
+  Clock,
+  Activity,
+  Zap,
+  ClipboardCheck,
+  RotateCcw
 } from 'lucide-react';
 import { Navbar } from './components/Navbar';
 import { UploadZone } from './components/UploadZone';
@@ -27,18 +33,33 @@ import { ExportBar } from './components/ExportBar';
 import { AuthModal } from './components/AuthModal';
 import { LoginPage } from './components/LoginPage';
 import { useAuth } from './context/AuthContext';
-import { ScanResult, ScanOptions, ExtractedRow } from './types';
+import { ScanResult, ScanOptions, ExtractedRow, getRolePermissions } from './types';
 import { validateAllRows, TEMPLATES } from './utils/validation';
-import { downloadCsv } from './utils/export';
+import { downloadCsv, downloadShiftReport } from './utils/export';
 import { SampleDocument } from './data/samplePdfs';
 import { optimizeFileForUpload } from './utils/imageOptimizer';
+import { ConsultaPaiAdresView } from './components/ConsultaPaiAdresView';
 
 export default function App() {
   const { user, isAuthenticated, isLoading, isAuthModalOpen, setIsAuthModalOpen, setAuthModalTab, token, login } = useAuth();
+  const permissions = getRolePermissions(user?.role);
+
   const [hasApiKey, setHasApiKey] = useState(true);
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const [activeTab, setActiveTab] = useState<'scanner' | 'consulta_pai_adres'>('scanner');
+  const [databaseRows, setDatabaseRows] = useState<any[]>([]);
+
+  // Operator shift statistics (for role usuario)
+  const [shiftSeconds, setShiftSeconds] = useState(0);
+  const [sessionDocsScanned, setSessionDocsScanned] = useState(0);
+  const [sessionTotalRows, setSessionTotalRows] = useState(0);
+
+  // Admin AI metrics (for role admin)
+  const [lastScanLatencyMs, setLastScanLatencyMs] = useState<number | null>(null);
+  const [lastScanModel, setLastScanModel] = useState<string | null>(null);
 
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [uploadedFileUrl, setUploadedFileUrl] = useState<string | null>(null);
@@ -55,6 +76,46 @@ export default function App() {
     cleanDocumentNumbers: true,
     speedMode: 'fast',
   });
+
+  // Shift timer running when authenticated
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const timer = setInterval(() => {
+      setShiftSeconds(prev => prev + 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [isAuthenticated]);
+
+  const formatShiftTime = (sec: number) => {
+    const h = Math.floor(sec / 3600);
+    const m = Math.floor((sec % 3600) / 60);
+    const s = sec % 60;
+    if (h > 0) return `${h}h ${m < 10 ? '0' : ''}${m}m ${s < 10 ? '0' : ''}${s}s`;
+    return `${m}m ${s < 10 ? '0' : ''}${s}s`;
+  };
+
+  const handleDownloadShiftReportClick = () => {
+    if (!user) return;
+    downloadShiftReport(
+      user.name || user.username,
+      user.role,
+      sessionDocsScanned,
+      sessionTotalRows,
+      formatShiftTime(shiftSeconds),
+      scanResult?.columns || [],
+      scanResult?.rows || []
+    );
+    triggerToast('📋 ¡Acta de Entrega de Turno descargada con éxito!');
+  };
+
+  const handleResetShift = () => {
+    if (window.confirm('¿Deseas reiniciar las estadísticas y el cronómetro de tu turno?')) {
+      setShiftSeconds(0);
+      setSessionDocsScanned(0);
+      setSessionTotalRows(0);
+      triggerToast('🔄 Contador de turno reiniciado.');
+    }
+  };
 
   // Check backend server status
   useEffect(() => {
@@ -94,6 +155,7 @@ export default function App() {
         triggerToast(`⚡ Archivo optimizado (${(optimized.originalSize / 1024 / 1024).toFixed(1)}MB → ${(optimized.optimizedSize / 1024).toFixed(0)}KB) para transferencia inmediata`);
       }
 
+      const scanStartTime = Date.now();
       const response = await fetch('/api/scan-pdf', {
         method: 'POST',
         headers: { 
@@ -113,6 +175,10 @@ export default function App() {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Error en el procesamiento del documento.');
       }
+
+      const latency = Date.now() - scanStartTime;
+      setLastScanLatencyMs(latency);
+      setLastScanModel(options.speedMode === 'precision' ? 'gemini-3.8-flash' : 'gemini-3.1-flash-lite');
 
       const resJson = await response.json();
       const rawResult = resJson.result;
@@ -174,6 +240,9 @@ export default function App() {
 
       setScanResult(structuredResult);
       setViewMode(structuredResult.rows.length > 0 ? 'table' : 'split');
+
+      setSessionDocsScanned(prev => prev + 1);
+      setSessionTotalRows(prev => prev + validatedRows.length);
 
       // Auto-export CSV if requested
       if (options.autoExportCsv && validatedRows.length > 0) {
@@ -266,6 +335,16 @@ export default function App() {
     setError(null);
   };
 
+  const handleUpdateDatabaseRows = (updatedRows: any[]) => {
+    setDatabaseRows(updatedRows);
+    if (scanResult) {
+      setScanResult({
+        ...scanResult,
+        rows: updatedRows as ExtractedRow[],
+      });
+    }
+  };
+
   // State: Checking authentication status on initial load
   if (isLoading) {
     return (
@@ -288,7 +367,11 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans">
-      <Navbar hasApiKey={hasApiKey} />
+      <Navbar 
+        hasApiKey={hasApiKey} 
+        activeView={activeTab} 
+        onSelectView={setActiveTab} 
+      />
 
       {/* Toast Notification */}
       {toastMessage && (
@@ -299,37 +382,188 @@ export default function App() {
       )}
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-        {/* Error Alert */}
-        {error && (
-          <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-rose-800 text-sm">
-            <div className="flex items-start space-x-3">
-              <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+        {/* ROL-SPECIFIC SPECIAL PANELS */}
+        {permissions.isAdmin ? (
+          /* ADMIN SPECIAL PANEL */
+          <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-4 rounded-2xl shadow-sm border border-indigo-900/60 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-amber-300 shadow-inner shrink-0">
+                <Crown className="w-5 h-5" />
+              </div>
               <div>
-                <h4 className="font-bold">Aviso en el procesamiento del documento</h4>
-                <p className="mt-0.5 text-xs text-rose-700">{error}</p>
+                <div className="flex items-center space-x-2">
+                  <span className="font-bold text-sm text-white">Panel de Control Administrador</span>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-400/20 text-amber-300 border border-amber-400/30 uppercase tracking-wide">
+                    Control Total (Admin)
+                  </span>
+                </div>
+                <p className="text-xs text-indigo-200 mt-0.5">
+                  Motor de IA Gemini, auditoría técnica de latencia y gestión de usuarios
+                </p>
               </div>
             </div>
 
-            <div className="flex items-center space-x-2 shrink-0 self-end sm:self-auto">
-              {uploadedFile && (
+            {/* Admin Controls */}
+            <div className="flex flex-wrap items-center gap-2.5">
+              {/* Speed Mode Selector */}
+              <div className="flex items-center bg-slate-800/80 p-1 rounded-xl border border-indigo-800/60 text-xs">
                 <button
                   type="button"
-                  onClick={() => handleFileSelected(uploadedFile)}
-                  className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold shadow-2xs transition-colors"
+                  onClick={() => {
+                    setOptions({ ...options, speedMode: 'fast' });
+                    triggerToast('⚡ Modo Rápido activado (Gemini 3.1 Flash Lite)');
+                  }}
+                  className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
+                    options.speedMode === 'fast'
+                      ? 'bg-blue-600 text-white shadow-2xs'
+                      : 'text-slate-300 hover:text-white'
+                  }`}
+                  title="Ultra rápido con Gemini 3.1 Flash Lite"
                 >
-                  Reintentar escaneo
+                  ⚡ Rápido (3.1 Lite)
                 </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOptions({ ...options, speedMode: 'precision' });
+                    triggerToast('🎯 Modo Alta Precisión activado (Gemini 3.8 Flash con Thinking)');
+                  }}
+                  className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
+                    options.speedMode === 'precision'
+                      ? 'bg-indigo-600 text-white shadow-2xs'
+                      : 'text-slate-300 hover:text-white'
+                  }`}
+                  title="Máxima precisión con Gemini 3.8 Flash y Thinking"
+                >
+                  🎯 Precisión (3.8 Flash)
+                </button>
+              </div>
+
+              {/* Latency Pill */}
+              {lastScanLatencyMs !== null && (
+                <div className="px-3 py-1.5 bg-slate-800/80 border border-slate-700 rounded-xl text-xs flex items-center space-x-1.5 font-mono text-emerald-400 shadow-inner">
+                  <Activity className="w-3.5 h-3.5" />
+                  <span>{(lastScanLatencyMs / 1000).toFixed(2)}s</span>
+                  <span className="text-[10px] text-slate-400">({lastScanModel})</span>
+                </div>
               )}
+            </div>
+          </div>
+        ) : (
+          /* USUARIO / OPERADOR SPECIAL PANEL */
+          <div className="bg-gradient-to-r from-blue-700 via-blue-800 to-indigo-900 text-white p-4 rounded-2xl shadow-sm border border-blue-600/60 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-white shadow-inner shrink-0">
+                <UserCheck className="w-5 h-5 text-emerald-300" />
+              </div>
+              <div>
+                <div className="flex items-center space-x-2">
+                  <span className="font-bold text-sm text-white">Turno de Digitación Activo</span>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-400/20 text-emerald-200 border border-emerald-400/30 uppercase tracking-wide">
+                    Operador: {user?.username}
+                  </span>
+                </div>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-blue-100 mt-1">
+                  <span className="flex items-center space-x-1">
+                    <Clock className="w-3.5 h-3.5 text-blue-200" />
+                    <span>Tiempo: <strong>{formatShiftTime(shiftSeconds)}</strong></span>
+                  </span>
+                  <span>·</span>
+                  <span>Documentos: <strong>{sessionDocsScanned}</strong></span>
+                  <span>·</span>
+                  <span>Pacientes: <strong>{sessionTotalRows}</strong></span>
+                </div>
+              </div>
+            </div>
+
+            {/* Operator Action Buttons */}
+            <div className="flex items-center space-x-2">
               <button
                 type="button"
-                onClick={() => setError(null)}
-                className="px-2.5 py-1.5 text-xs font-semibold text-rose-600 hover:text-rose-900"
+                onClick={handleDownloadShiftReportClick}
+                className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-white hover:bg-blue-50 text-blue-900 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer"
+                title="Descargar reporte oficial en Excel de cierre de turno"
               >
-                Cerrar
+                <ClipboardCheck className="w-4 h-4 text-blue-700" />
+                <span>Entregar Turno (.xlsx)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleResetShift}
+                className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-colors cursor-pointer"
+                title="Reiniciar contador de turno"
+              >
+                <RotateCcw className="w-4 h-4" />
               </button>
             </div>
           </div>
         )}
+
+        {/* View Switcher for mobile & quick access */}
+        <div className="flex lg:hidden items-center justify-center bg-slate-200/70 p-1 rounded-xl">
+          <button
+            type="button"
+            onClick={() => setActiveTab('scanner')}
+            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+              activeTab === 'scanner' ? 'bg-white shadow-xs text-blue-700' : 'text-slate-600'
+            }`}
+          >
+            Escáner PDF / Tablas
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('consulta_pai_adres')}
+            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+              activeTab === 'consulta_pai_adres' ? 'bg-[#7e22ce] text-white shadow-xs' : 'text-slate-600'
+            }`}
+          >
+            Consulta PAI / ADRES
+          </button>
+        </div>
+
+        {activeTab === 'consulta_pai_adres' ? (
+          <div className="space-y-4">
+            <ConsultaPaiAdresView
+              excelDatabaseRows={scanResult?.rows && scanResult.rows.length > 0 ? scanResult.rows : databaseRows}
+              onUpdateDatabaseRows={handleUpdateDatabaseRows}
+              onTriggerToast={triggerToast}
+              userRole={user.role}
+            />
+          </div>
+        ) : (
+          <>
+            {/* Error Alert */}
+            {error && (
+              <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-rose-800 text-sm">
+                <div className="flex items-start space-x-3">
+                  <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="font-bold">Aviso en el procesamiento del documento</h4>
+                    <p className="mt-0.5 text-xs text-rose-700">{error}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-2 shrink-0 self-end sm:self-auto">
+                  {uploadedFile && (
+                    <button
+                      type="button"
+                      onClick={() => handleFileSelected(uploadedFile)}
+                      className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold shadow-2xs transition-colors"
+                    >
+                      Reintentar escaneo
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setError(null)}
+                    className="px-2.5 py-1.5 text-xs font-semibold text-rose-600 hover:text-rose-900"
+                  >
+                    Cerrar
+                  </button>
+                </div>
+              </div>
+            )}
 
         {/* State 1: Uploading / Idle */}
         {!scanResult && !isScanning && (
@@ -502,6 +736,7 @@ export default function App() {
               options={options}
               onOptionsChange={setOptions}
               onReset={handleReset}
+              onOpenConsultaPaiAdres={() => setActiveTab('consulta_pai_adres')}
             />
 
             {/* Main Content Area based on ViewMode */}
@@ -554,7 +789,9 @@ export default function App() {
             </div>
           </div>
         )}
-      </main>
+      </>
+    )}
+  </main>
 
       <footer className="border-t border-slate-200 bg-white py-4 text-center text-xs text-slate-500">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">

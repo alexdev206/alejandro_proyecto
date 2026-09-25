@@ -118,27 +118,54 @@ app.get('/api/health', (req, res) => {
 
 // ==========================================
 // Authentication System & Pre-seeded Users
-// Admin: Sisvan / S15van39**
-// Invitado: Invited / 1nvited39**
+// Admin: admin / admin26 (y Sisvan / S15van39**)
+// Usuario: usuario / usuario26 (y user / user26)
 // ==========================================
 interface AppUser {
   id: string;
   username: string;
   password: string;
   name: string;
-  role: 'admin' | 'invitado' | 'operador';
+  role: 'admin' | 'usuario' | 'operador' | 'invitado';
   createdAt: string;
 }
 
 interface SessionData {
   userId: string;
   username: string;
-  role: 'admin' | 'invitado' | 'operador';
+  role: 'admin' | 'usuario' | 'operador' | 'invitado';
   name: string;
   expiresAt: number;
 }
 
+let totalScansProcessed = 0;
+const serverStartTime = Date.now();
+
 const usersList: AppUser[] = [
+  {
+    id: 'usr_admin',
+    username: 'admin',
+    password: 'admin26',
+    name: 'Administrador General (Admin)',
+    role: 'admin',
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'usr_usuario',
+    username: 'usuario',
+    password: 'usuario26',
+    name: 'Usuario Operador SISVAN',
+    role: 'usuario',
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'usr_user',
+    username: 'user',
+    password: 'user26',
+    name: 'Usuario Digitador',
+    role: 'usuario',
+    createdAt: new Date().toISOString(),
+  },
   {
     id: 'usr_admin_sisvan',
     username: 'Sisvan',
@@ -152,7 +179,7 @@ const usersList: AppUser[] = [
     username: 'Invited',
     password: '1nvited39**',
     name: 'Usuario Invitado',
-    role: 'invitado',
+    role: 'usuario',
     createdAt: new Date().toISOString(),
   },
 ];
@@ -216,10 +243,10 @@ app.post('/api/auth/login', (req, res) => {
   }
 });
 
-// Auth: Register Endpoint (Disabled - only authorized preconfigured accounts)
+// Auth: Register Endpoint (Permitted for Admin or initial setup)
 app.post('/api/auth/register', (req, res) => {
   return res.status(403).json({
-    error: 'El registro de nuevas cuentas está deshabilitado. Inicie sesión únicamente con los usuarios autorizados: Sisvan (Admin) o Invited (Invitado).'
+    error: 'El registro público está deshabilitado. Solicite a un Administrador que cree su cuenta o utilice: admin / admin26 o usuario / usuario26.'
   });
 });
 
@@ -273,6 +300,95 @@ app.get('/api/auth/users', (req, res) => {
   }));
 
   return res.json({ users: publicUsers });
+});
+
+// Auth: Create new user (Only for admin)
+app.post('/api/auth/users', (req, res) => {
+  const token = getAuthToken(req);
+  const session = token ? sessions.get(token) : null;
+  if (!session || session.role !== 'admin') {
+    return res.status(403).json({ error: 'Acceso denegado. Se requieren permisos de Administrador.' });
+  }
+
+  const { username, password, name, role } = req.body || {};
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Usuario y contraseña son obligatorios.' });
+  }
+
+  const cleanUser = String(username).trim();
+  const exists = usersList.some(u => u.username.toLowerCase() === cleanUser.toLowerCase());
+  if (exists) {
+    return res.status(400).json({ error: `El usuario "${cleanUser}" ya existe en el sistema.` });
+  }
+
+  const newUser: AppUser = {
+    id: `usr_${Date.now()}`,
+    username: cleanUser,
+    password: String(password).trim(),
+    name: String(name || cleanUser).trim(),
+    role: role === 'admin' ? 'admin' : 'usuario',
+    createdAt: new Date().toISOString(),
+  };
+
+  usersList.push(newUser);
+  return res.status(201).json({
+    success: true,
+    user: {
+      id: newUser.id,
+      username: newUser.username,
+      name: newUser.name,
+      role: newUser.role,
+      createdAt: newUser.createdAt,
+    }
+  });
+});
+
+// Auth: Delete user (Only for admin)
+app.delete('/api/auth/users/:id', (req, res) => {
+  const token = getAuthToken(req);
+  const session = token ? sessions.get(token) : null;
+  if (!session || session.role !== 'admin') {
+    return res.status(403).json({ error: 'Acceso denegado. Se requieren permisos de Administrador.' });
+  }
+
+  const { id } = req.params;
+  const userIndex = usersList.findIndex(u => u.id === id);
+  if (userIndex === -1) {
+    return res.status(404).json({ error: 'Usuario no encontrado.' });
+  }
+
+  if (usersList[userIndex].username === 'admin') {
+    return res.status(400).json({ error: 'No se puede eliminar la cuenta principal de Administrador (admin).' });
+  }
+
+  if (usersList[userIndex].id === session.userId) {
+    return res.status(400).json({ error: 'No puedes eliminar la cuenta con la que tienes sesión abierta actualmente.' });
+  }
+
+  const deleted = usersList.splice(userIndex, 1)[0];
+  return res.json({ success: true, message: `Usuario ${deleted.username} eliminado correctamente.` });
+});
+
+// Admin: System Audit Stats
+app.get('/api/admin/audit-stats', (req, res) => {
+  const token = getAuthToken(req);
+  const session = token ? sessions.get(token) : null;
+  if (!session || session.role !== 'admin') {
+    return res.status(403).json({ error: 'Acceso denegado. Se requieren permisos de Administrador.' });
+  }
+
+  const uptimeSec = Math.floor((Date.now() - serverStartTime) / 1000);
+  const hours = Math.floor(uptimeSec / 3600);
+  const minutes = Math.floor((uptimeSec % 3600) / 60);
+
+  return res.json({
+    totalUsers: usersList.length,
+    activeSessions: sessions.size,
+    totalScansProcessed,
+    uptime: `${hours}h ${minutes}m ${uptimeSec % 60}s`,
+    version: 'SISVAN 2026.3.8 Professional',
+    activeModels: ['gemini-3.8-flash', 'gemini-3.1-flash-lite'],
+  });
 });
 
 
@@ -421,11 +537,19 @@ Llenar 'values' de cada fila con los textos en el mismo orden que 'columns'.
       };
     });
 
+    totalScansProcessed++;
+
     res.json({
       success: true,
       result: {
         ...parsedData,
         rows: normalizedRows,
+        metadata: {
+          operator: session.username,
+          operatorRole: session.role,
+          scannedAt: new Date().toISOString(),
+          speedMode: speedMode || 'fast',
+        }
       },
     });
   } catch (error: any) {

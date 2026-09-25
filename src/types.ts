@@ -50,7 +50,34 @@ export interface ScanOptions {
   speedMode: 'fast' | 'precision';
 }
 
-export type UserRole = 'admin' | 'invitado' | 'operador';
+export type UserRole = 'admin' | 'usuario' | 'operador' | 'invitado';
+
+export interface RolePermissions {
+  isAdmin: boolean;
+  isUsuario: boolean;
+  canManageUsers: boolean;
+  canUsePrecisionMode: boolean;
+  canDownloadPythonScript: boolean;
+  canSyncDatabase: boolean;
+  canViewAuditStats: boolean;
+  canAddColumns: boolean;
+}
+
+export const getRolePermissions = (role?: UserRole | string): RolePermissions => {
+  const isAdmin = role === 'admin';
+  const isUsuario = role === 'usuario' || role === 'operador' || role === 'invitado';
+
+  return {
+    isAdmin,
+    isUsuario,
+    canManageUsers: isAdmin,
+    canUsePrecisionMode: isAdmin,
+    canDownloadPythonScript: isAdmin,
+    canSyncDatabase: true,
+    canViewAuditStats: isAdmin,
+    canAddColumns: isAdmin,
+  };
+};
 
 export interface AuthUser {
   id: string;
@@ -65,4 +92,19 @@ export interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
 }
+
+export interface PacienteConsulta {
+  id?: string;
+  documento: string;
+  tipoDocumento?: string;
+  primerNombre?: string;
+  segundoNombre?: string;
+  primerApellido?: string;
+  segundoApellido?: string;
+  observaciones?: string;
+  updatedAt?: string;
+  [key: string]: any;
+}
+
+export type ExcelBaseRow = PacienteConsulta;
 
