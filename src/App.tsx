@@ -27,7 +27,8 @@ import { DocumentViewer } from './components/DocumentViewer';
 import { ExportBar } from './components/ExportBar';
 import { AuthModal } from './components/AuthModal';
 import { LoginPage } from './components/LoginPage';
-import { ConsultaPaiAdresView } from './components/ConsultaPaiAdresView';
+import { ConsultaPaiView } from './components/ConsultaPaiView';
+import { ConsultaComprobadorView } from './components/ConsultaComprobadorView';
 import { PatientsDirectoryView } from './components/PatientsDirectoryView';
 import { AuditControlView } from './components/AuditControlView';
 import { PatientFieldInspector } from './components/PatientFieldInspector';
@@ -42,8 +43,23 @@ export default function App() {
   const { user, isAuthenticated, isLoading, isAuthModalOpen, setIsAuthModalOpen } = useAuth();
   const permissions = getRolePermissions(user?.role);
 
-  // Core navigation state: 5 modules
-  const [activeModule, setActiveModule] = useState<AppModule>('scanner');
+  // Core navigation state: 5 modules con persistencia automática al cerrar la pestaña
+  const [activeModule, setActiveModuleState] = useState<AppModule>(() => {
+    try {
+      const saved = localStorage.getItem('sisvan_active_module');
+      if (saved && ['scanner', 'table', 'consulta_pai', 'consulta_comprobador', 'patients', 'audit'].includes(saved)) {
+        return saved as AppModule;
+      }
+    } catch (_e) {}
+    return 'consulta_pai';
+  });
+
+  const setActiveModule = (mod: AppModule) => {
+    setActiveModuleState(mod);
+    try {
+      localStorage.setItem('sisvan_active_module', mod);
+    } catch (_e) {}
+  };
   
   // Field-level direct access & filter state
   const [selectedFieldFilter, setSelectedFieldFilter] = useState<string | null>(null);
@@ -64,13 +80,43 @@ export default function App() {
   const [lastScanLatencyMs, setLastScanLatencyMs] = useState<number | null>(null);
   const [lastScanModel, setLastScanModel] = useState<string | null>(null);
 
-  // Document & Scan data
+  // Document & Scan data con recuperación tras cierre de pestaña
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [uploadedFileUrl, setUploadedFileUrl] = useState<string | null>(null);
   const [isOptimizedUpload, setIsOptimizedUpload] = useState(false);
-  const [scanResult, setScanResult] = useState<ScanResult | null>(null);
+  
+  const [scanResult, setScanResultState] = useState<ScanResult | null>(() => {
+    try {
+      const cached = localStorage.getItem('sisvan_cached_scan_result');
+      if (cached) return JSON.parse(cached);
+    } catch (_e) {}
+    return null;
+  });
+
+  const setScanResult = (res: ScanResult | null) => {
+    setScanResultState(res);
+    try {
+      if (res) localStorage.setItem('sisvan_cached_scan_result', JSON.stringify(res));
+      else localStorage.removeItem('sisvan_cached_scan_result');
+    } catch (_e) {}
+  };
+
   const [viewMode, setViewMode] = useState<'table' | 'split' | 'document'>('table');
-  const [databaseRows, setDatabaseRows] = useState<any[]>([]);
+  
+  const [databaseRows, setDatabaseRowsState] = useState<any[]>(() => {
+    try {
+      const stored = localStorage.getItem('sisvan_database_rows');
+      if (stored) return JSON.parse(stored);
+    } catch (_e) {}
+    return [];
+  });
+
+  const setDatabaseRows = (rows: any[]) => {
+    setDatabaseRowsState(rows);
+    try {
+      localStorage.setItem('sisvan_database_rows', JSON.stringify(rows));
+    } catch (_e) {}
+  };
 
   const [options, setOptions] = useState<ScanOptions>({
     template: 'AUTO',
@@ -119,6 +165,17 @@ export default function App() {
       .catch(err => {
         console.warn('Health check warning:', err);
       });
+
+    const wasInitialized = sessionStorage.getItem('sisvan_tab_opened');
+    if (!wasInitialized) {
+      sessionStorage.setItem('sisvan_tab_opened', 'true');
+      const saved = localStorage.getItem('sisvan_active_module');
+      if (saved) {
+        setTimeout(() => {
+          triggerToast('✅ Pestaña restaurada: Se recuperó tu pantalla y sesión de trabajo.');
+        }, 800);
+      }
+    }
   }, []);
 
   const triggerToast = (msg: string) => {
@@ -288,7 +345,7 @@ export default function App() {
       if (updatedRows.length > 0) {
         setScanResult({
           documentTitle: 'Base de Datos Clínica',
-          detectedTemplate: 'SISVAN',
+          detectedTemplate: 'GENERAL',
           templateName: 'Matriz Clínica',
           columns: Object.keys(updatedRows[0].data || {}).map(k => ({ key: k, label: k, required: false, type: 'text' })),
           rows: updatedRows,
@@ -640,7 +697,7 @@ export default function App() {
                   options={options}
                   onOptionsChange={setOptions}
                   onReset={handleReset}
-                  onOpenConsultaPaiAdres={() => setActiveModule('consulta_pai_adres')}
+                  onOpenConsultaPaiAdres={() => setActiveModule('consulta_comprobador')}
                 />
 
                 {/* Column Quick Focus Bar */}
@@ -779,25 +836,41 @@ export default function App() {
           </motion.div>
         )}
 
-        {/* MODULE 3: CONSULTA PAI / ADRES */}
-        {activeModule === 'consulta_pai_adres' && (
+        {/* MODULE 3: PAIWEB VACUNACIÓN */}
+        {activeModule === 'consulta_pai' && (
           <motion.div
-            key="module-consulta-pai-adres"
+            key="module-consulta-pai"
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
             className="space-y-4"
           >
-            <ConsultaPaiAdresView
+            <ConsultaPaiView
               excelDatabaseRows={scanResult?.rows && scanResult.rows.length > 0 ? scanResult.rows : databaseRows}
               onUpdateDatabaseRows={handleUpdateDatabaseRows}
               onTriggerToast={triggerToast}
-              userRole={user.role}
             />
           </motion.div>
         )}
 
-        {/* MODULE 4: DIRECTORIO CLÍNICO SISVESO */}
+        {/* MODULE 5: COMPROBADOR DE DERECHOS (APARTE DE PAI Y ADRES) */}
+        {activeModule === 'consulta_comprobador' && (
+          <motion.div
+            key="module-consulta-comprobador"
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            className="space-y-4"
+          >
+            <ConsultaComprobadorView
+              excelDatabaseRows={scanResult?.rows && scanResult.rows.length > 0 ? scanResult.rows : databaseRows}
+              onUpdateDatabaseRows={handleUpdateDatabaseRows}
+              onTriggerToast={triggerToast}
+            />
+          </motion.div>
+        )}
+
+        {/* MODULE 4: DIRECTORIO CLÍNICO SISVAN */}
         {activeModule === 'patients' && (
           <motion.div
             key="module-patients"
@@ -810,7 +883,7 @@ export default function App() {
               rows={scanResult?.rows && scanResult.rows.length > 0 ? scanResult.rows : databaseRows}
               columns={scanResult?.columns || []}
               onUpdateRows={handleRowsChange}
-              onOpenConsultaPaiAdres={() => setActiveModule('consulta_pai_adres')}
+              onOpenConsultaPaiAdres={() => setActiveModule('consulta_comprobador')}
               onTriggerToast={triggerToast}
             />
           </motion.div>
@@ -845,7 +918,7 @@ export default function App() {
       {/* FOOTER: Minimal, Anti-Slop, Strict Legal Notice */}
       <footer className="border-t border-slate-200 bg-white py-4 text-xs text-slate-500">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>Escáner y Transcriptor de PDF a CSV · Sistema Integrado SISVAN & SISVESO 2026</span>
+          <span>Escáner y Transcriptor de PDF a CSV · Sistema Integrado SISVAN 2026</span>
           <span>Cumplimiento Ley Estatutaria 1581 de 2012 · Transcripción Multimodal</span>
         </div>
       </footer>

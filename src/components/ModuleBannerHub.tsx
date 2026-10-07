@@ -19,7 +19,9 @@ import {
   FileCheck,
   Bot,
   Layers,
-  ArrowUpRight
+  ArrowUpRight,
+  Baby,
+  Database
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { AppModule, ScanResult, ExtractedRow, ColumnDefinition, UserRole } from '../types';
@@ -84,20 +86,30 @@ export const ModuleBannerHub: React.FC<ModuleBannerHubProps> = ({
       badge: scanResult ? `${scanResult.rows.length} Registros` : 'Sin datos',
     },
     {
-      id: 'consulta_pai_adres' as AppModule,
+      id: 'consulta_pai' as AppModule,
       number: '03',
-      title: 'Consulta PAI / ADRES',
-      shortTitle: 'PAI & ADRES',
-      subtitle: 'Comprobador de derechos BDUA, esquema SISVAN y robot de consulta',
-      icon: ShieldCheck,
+      title: 'PAIWEB · Vacunación Infantil',
+      shortTitle: 'PAIWEB Vacunas',
+      subtitle: 'Módulo pediátrico de inmunización, esquemas biológicos y registro SISVAN',
+      icon: Baby,
+      accent: 'blue',
+      badge: 'PAIWEB 2.0',
+    },
+    {
+      id: 'consulta_comprobador' as AppModule,
+      number: '04',
+      title: 'Comprobador Distrital de Derechos',
+      shortTitle: 'Comprobador Bogotá',
+      subtitle: 'Aseguramiento en Bogotá D.C., asignación a Subred Sur y clasificación SISBEN',
+      icon: Database,
       accent: 'purple',
-      badge: 'SISVAN 2026',
+      badge: 'SDS Bogotá',
     },
     {
       id: 'patients' as AppModule,
-      number: '04',
+      number: '05',
       title: 'Directorio Clínico',
-      shortTitle: 'Directorio SISVESO',
+      shortTitle: 'Directorio SISVAN',
       subtitle: 'Directorio consolidado de pacientes, alertas y ficha nominal',
       icon: Users,
       accent: 'cyan',
@@ -105,7 +117,7 @@ export const ModuleBannerHub: React.FC<ModuleBannerHubProps> = ({
     },
     {
       id: 'audit' as AppModule,
-      number: '05',
+      number: '06',
       title: 'Control & Turno',
       shortTitle: 'Turno & Auditoría',
       subtitle: isAdmin 
@@ -353,11 +365,21 @@ export const ModuleBannerHub: React.FC<ModuleBannerHubProps> = ({
                 </>
               )}
 
-              {activeModule === 'consulta_pai_adres' && (
+
+              {activeModule === 'consulta_pai' && (
                 <>
-                  <div className="px-3.5 py-2 bg-purple-950/70 text-purple-200 border border-purple-800/80 rounded-xl text-xs flex items-center space-x-2">
-                    <ShieldCheck className="w-4 h-4 text-purple-400" />
-                    <span>Módulo BDUA & Esquemas SISVAN 2026</span>
+                  <div className="px-3.5 py-2 bg-blue-950/70 text-blue-200 border border-blue-800/80 rounded-xl text-xs flex items-center space-x-2">
+                    <Baby className="w-4 h-4 text-blue-400" />
+                    <span>PAIWEB 2.0 · Esquema de Vacunas Menores</span>
+                  </div>
+                </>
+              )}
+
+              {activeModule === 'consulta_comprobador' && (
+                <>
+                  <div className="px-3.5 py-2 bg-indigo-950/70 text-indigo-200 border border-indigo-800/80 rounded-xl text-xs flex items-center space-x-2">
+                    <Database className="w-4 h-4 text-indigo-400" />
+                    <span>Secretaría de Salud · Comprobador Capital</span>
                   </div>
                 </>
               )}
@@ -380,7 +402,7 @@ export const ModuleBannerHub: React.FC<ModuleBannerHubProps> = ({
               {activeModule === 'audit' && (
                 <div className="flex items-center space-x-2">
                   <span className="text-xs text-slate-300 font-mono">
-                    Sesión iniciada con rol <strong>{userRole}</strong>
+                    Sesión activa SISVAN Digital
                   </span>
                 </div>
               )}

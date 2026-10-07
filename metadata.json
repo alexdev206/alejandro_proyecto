@@ -1,6 +1,6 @@
 {
-  "name": "Escáner y Transcriptor de PDF a CSV",
-  "description": "Escanea, lee y transcribe documentos PDF y consolidados de caracterización manuscritos a tablas estructuradas con exportación automática a CSV y Excel.",
+  "name": "Aplicativo web",
+  "description": "Escaner y conexion a PAI, consultor etc...",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

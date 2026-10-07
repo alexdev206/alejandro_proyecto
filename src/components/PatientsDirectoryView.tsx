@@ -151,8 +151,38 @@ export const PatientsDirectoryView: React.FC<PatientsDirectoryViewProps> = ({
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Directorio_Pacientes');
-    XLSX.writeFile(wb, `directorio_pacientes_sisveso_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    XLSX.writeFile(wb, `directorio_pacientes_sisvan_${new Date().toISOString().slice(0, 10)}.xlsx`);
     onTriggerToast('📥 Directorio de pacientes exportado a Excel.');
+  };
+
+  const handleDeduplicatePatients = () => {
+    if (rows.length === 0) {
+      onTriggerToast('ℹ️ No hay pacientes en el directorio para deduplicar.');
+      return;
+    }
+
+    const seen = new Set<string>();
+    const deduplicated: ExtractedRow[] = [];
+    let dupsCount = 0;
+
+    for (const r of rows) {
+      const doc = String(r.data?.num_identificacion || r.data?.documento || r.data?.id || r.id || '').trim();
+      if (!doc || seen.has(doc)) {
+        dupsCount++;
+      } else {
+        seen.add(doc);
+        deduplicated.push(r);
+      }
+    }
+
+    if (dupsCount === 0) {
+      onTriggerToast('✅ Todos los registros son únicos. No se encontraron documentos duplicados.');
+      return;
+    }
+
+    const renumbered = deduplicated.map((r, i) => ({ ...r, rowNumber: i + 1 }));
+    onUpdateRows(renumbered);
+    onTriggerToast(`✨ ¡Listo! Se eliminaron ${dupsCount} registros duplicados. Ahora hay ${renumbered.length} pacientes únicos.`);
   };
 
   return (
@@ -167,7 +197,7 @@ export const PatientsDirectoryView: React.FC<PatientsDirectoryViewProps> = ({
             <div>
               <div className="flex items-center space-x-2">
                 <h2 className="text-lg font-bold text-white tracking-tight">
-                  Base de Pacientes SISVESO
+                  Directorio Nominal de Pacientes SISVAN
                 </h2>
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-blue-500/20 text-blue-300 border border-blue-400/30">
                   {stats.total} Pacientes Registrados
@@ -180,6 +210,16 @@ export const PatientsDirectoryView: React.FC<PatientsDirectoryViewProps> = ({
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={handleDeduplicatePatients}
+              className="inline-flex items-center space-x-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-semibold transition-all shadow-xs cursor-pointer"
+              title="Eliminar registros duplicados que tengan el mismo número de documento"
+            >
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Deduplicar Pacientes</span>
+            </button>
+
             <button
               type="button"
               onClick={handleAddPatient}

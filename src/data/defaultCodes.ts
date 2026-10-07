@@ -389,14 +389,53 @@ export const USER_383_CODIGOS_RAW = `consecutivo,codigo
 382,1023425530
 383,1069512742`;
 
-export const PARSED_383_CODIGOS: ConsecutivoCodigo[] = USER_383_CODIGOS_RAW
+// Parse and deduplicate documents automatically
+const seenDocs = new Set<string>();
+const rawParsed: ConsecutivoCodigo[] = [];
+
+USER_383_CODIGOS_RAW
   .split('\n')
   .slice(1)
   .filter(l => l.trim().length > 0)
-  .map(line => {
-    const [c, k] = line.split(',');
-    return {
-      consecutivo: parseInt(c.trim(), 10),
-      codigo: k.trim()
-    };
+  .forEach(line => {
+    const parts = line.split(',');
+    if (parts.length >= 2) {
+      const doc = parts[1].trim();
+      if (doc && !seenDocs.has(doc)) {
+        seenDocs.add(doc);
+        rawParsed.push({
+          consecutivo: rawParsed.length + 1,
+          codigo: doc
+        });
+      }
+    }
   });
+
+export const PARSED_383_CODIGOS: ConsecutivoCodigo[] = rawParsed;
+
+/**
+ * Universal deduplicator utility for health documents
+ */
+export function deduplicateDocuments<T>(
+  items: T[],
+  getDoc: (item: T) => string
+): { uniqueItems: T[]; removedCount: number } {
+  const seen = new Set<string>();
+  const uniqueItems: T[] = [];
+  let removedCount = 0;
+
+  for (const item of items) {
+    const rawDoc = getDoc(item);
+    const cleanDoc = String(rawDoc || '').trim().replace(/\D/g, '') || String(rawDoc || '').trim();
+    if (!cleanDoc) continue;
+
+    if (seen.has(cleanDoc)) {
+      removedCount++;
+    } else {
+      seen.add(cleanDoc);
+      uniqueItems.push(item);
+    }
+  }
+
+  return { uniqueItems, removedCount };
+}

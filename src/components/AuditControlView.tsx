@@ -63,7 +63,6 @@ export const AuditControlView: React.FC<AuditControlViewProps> = ({
   const [newUsername, setNewUsername] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [newName, setNewName] = useState('');
-  const [newRole, setNewRole] = useState<'admin' | 'usuario'>('usuario');
   const [formError, setFormError] = useState<string | null>(null);
 
   const fetchAdminData = async () => {
@@ -137,7 +136,6 @@ export const AuditControlView: React.FC<AuditControlViewProps> = ({
           username: newUsername.trim(),
           password: newPassword,
           name: newName.trim() || newUsername.trim(),
-          role: newRole,
         }),
       });
 
@@ -435,14 +433,6 @@ export const AuditControlView: React.FC<AuditControlViewProps> = ({
                   className="px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600 font-mono"
                   required
                 />
-                <select
-                  value={newRole}
-                  onChange={(e) => setNewRole(e.target.value as any)}
-                  className="px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600"
-                >
-                  <option value="usuario">Usuario (Operador)</option>
-                  <option value="admin">Administrador (Admin)</option>
-                </select>
               </div>
               <div className="flex justify-end pt-1">
                 <button
@@ -464,12 +454,8 @@ export const AuditControlView: React.FC<AuditControlViewProps> = ({
               return (
                 <div key={u.id} className="p-3.5 bg-white flex items-center justify-between text-xs hover:bg-slate-50 transition-colors">
                   <div className="flex items-center space-x-3">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${
-                      u.role === 'admin'
-                        ? 'bg-indigo-100 text-indigo-700 border border-indigo-200'
-                        : 'bg-blue-100 text-blue-700 border border-blue-200'
-                    }`}>
-                      {u.role === 'admin' ? '👑' : '👤'}
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs bg-blue-100 text-blue-700 border border-blue-200">
+                      👤
                     </div>
                     <div>
                       <div className="font-bold text-slate-900 flex items-center space-x-2">
@@ -479,11 +465,6 @@ export const AuditControlView: React.FC<AuditControlViewProps> = ({
                             Tú
                           </span>
                         )}
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                          u.role === 'admin' ? 'bg-indigo-600 text-white' : 'bg-blue-600 text-white'
-                        }`}>
-                          {u.role}
-                        </span>
                       </div>
                       <div className="text-slate-500 text-[11px] mt-0.5">{u.name}</div>
                     </div>

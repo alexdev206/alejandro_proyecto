@@ -57,25 +57,20 @@ export interface RolePermissions {
   isUsuario: boolean;
   canManageUsers: boolean;
   canUsePrecisionMode: boolean;
-  canDownloadPythonScript: boolean;
   canSyncDatabase: boolean;
   canViewAuditStats: boolean;
   canAddColumns: boolean;
 }
 
-export const getRolePermissions = (role?: UserRole | string): RolePermissions => {
-  const isAdmin = role === 'admin';
-  const isUsuario = role === 'usuario' || role === 'operador' || role === 'invitado';
-
+export const getRolePermissions = (_role?: UserRole | string): RolePermissions => {
   return {
-    isAdmin,
-    isUsuario,
-    canManageUsers: isAdmin,
-    canUsePrecisionMode: isAdmin,
-    canDownloadPythonScript: isAdmin,
+    isAdmin: true,
+    isUsuario: true,
+    canManageUsers: true,
+    canUsePrecisionMode: true,
     canSyncDatabase: true,
-    canViewAuditStats: isAdmin,
-    canAddColumns: isAdmin,
+    canViewAuditStats: true,
+    canAddColumns: true,
   };
 };
 
@@ -87,7 +82,15 @@ export interface AuthUser {
   token?: string;
 }
 
-export type AppModule = 'scanner' | 'table' | 'consulta_pai_adres' | 'patients' | 'audit';
+export type AppModule = 
+  | 'scanner' 
+  | 'table' 
+  | 'consulta_adres' 
+  | 'consulta_pai' 
+  | 'consulta_comprobador' 
+  | 'consulta_pai_adres' 
+  | 'patients' 
+  | 'audit';
 
 export interface AuthState {
   user: AuthUser | null;

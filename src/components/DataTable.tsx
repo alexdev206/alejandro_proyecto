@@ -139,6 +139,32 @@ export const DataTable: React.FC<DataTableProps> = ({
     if (onTriggerToast) onTriggerToast('✅ Ficha clínica del paciente guardada.');
   };
 
+  const handleDeduplicateRows = () => {
+    if (rows.length === 0) return;
+    const seen = new Set<string>();
+    const deduplicated: ExtractedRow[] = [];
+    let dupsCount = 0;
+
+    for (const r of rows) {
+      const doc = String(r.data?.ID || r.data?.num_identificacion || r.data?.documento || r.data?.cedula || r.id || '').trim();
+      if (!doc || seen.has(doc)) {
+        dupsCount++;
+      } else {
+        seen.add(doc);
+        deduplicated.push(r);
+      }
+    }
+
+    if (dupsCount === 0) {
+      if (onTriggerToast) onTriggerToast('✅ Todos los registros son únicos en la matriz.');
+      return;
+    }
+
+    const renumbered = deduplicated.map((r, i) => ({ ...r, rowNumber: i + 1 }));
+    onRowsChange(renumbered);
+    if (onTriggerToast) onTriggerToast(`✨ ¡Listo! Se eliminaron ${dupsCount} filas duplicadas.`);
+  };
+
   return (
     <>
       <div className="bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-xs transition-all">
@@ -155,6 +181,16 @@ export const DataTable: React.FC<DataTableProps> = ({
                 className="w-full pl-9 pr-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
             </div>
+
+            <button
+              type="button"
+              onClick={handleDeduplicateRows}
+              className="inline-flex items-center space-x-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+              title="Eliminar filas duplicadas en la matriz"
+            >
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Deduplicar</span>
+            </button>
 
             <button
               type="button"

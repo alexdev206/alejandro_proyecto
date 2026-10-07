@@ -19,7 +19,9 @@ import {
   Lock,
   UserPlus,
   X,
-  AlertTriangle
+  AlertTriangle,
+  Baby,
+  Database
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getRolePermissions, AppModule } from '../types';
@@ -66,7 +68,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [newUsername, setNewUsername] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [newName, setNewName] = useState('');
-  const [newRole, setNewRole] = useState<'admin' | 'usuario'>('usuario');
   const [userActionError, setUserActionError] = useState<string | null>(null);
   const [userActionSuccess, setUserActionSuccess] = useState<string | null>(null);
 
@@ -119,7 +120,6 @@ export const Navbar: React.FC<NavbarProps> = ({
           username: newUsername.trim(),
           password: newPassword,
           name: newName.trim() || newUsername.trim(),
-          role: newRole,
         }),
       });
 
@@ -171,14 +171,14 @@ export const Navbar: React.FC<NavbarProps> = ({
             <div>
               <div className="flex items-center space-x-2">
                 <h1 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
-                  SISVAN & SISVESO
+                  SISVAN Digital
                 </h1>
                 <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
                   Subred Sur · SDS
                 </span>
               </div>
               <p className="text-xs text-slate-500 hidden sm:block">
-                Digitalización multimodal, consultas PAIWEB / ADRES y directorio nominal
+                Digitalización multimodal, consultas PAIWEB / Comprobador de Derechos y directorio nominal
               </p>
             </div>
           </div>
@@ -220,19 +220,37 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             <button
               type="button"
-              onClick={() => handleSelect('consulta_pai_adres')}
+              onClick={() => handleSelect('consulta_pai')}
               className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                currentMod === 'consulta_pai_adres'
+                currentMod === 'consulta_pai'
+                  ? 'bg-blue-700 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+              }`}
+            >
+              <Baby className="w-3.5 h-3.5" />
+              <span>3. PAIWEB Vacunación</span>
+              <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
+                currentMod === 'consulta_pai' ? 'bg-blue-900 text-blue-200' : 'bg-blue-100 text-blue-800'
+              }`}>
+                PAI
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleSelect('consulta_comprobador')}
+              className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                currentMod === 'consulta_comprobador'
                   ? 'bg-purple-700 text-white shadow-xs'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
             >
-              <ShieldCheck className="w-3.5 h-3.5" />
-              <span>3. PAI, ADRES & Comprobador</span>
+              <Database className="w-3.5 h-3.5" />
+              <span>4. Comprobador</span>
               <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
-                currentMod === 'consulta_pai_adres' ? 'bg-purple-900 text-purple-200' : 'bg-purple-100 text-purple-800'
+                currentMod === 'consulta_comprobador' ? 'bg-purple-900 text-purple-200' : 'bg-purple-100 text-purple-800'
               }`}>
-                383
+                SDS
               </span>
             </button>
 
@@ -246,7 +264,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               }`}
             >
               <Users className="w-3.5 h-3.5" />
-              <span>4. Directorio</span>
+              <span>5. Directorio</span>
             </button>
 
             <button
@@ -259,7 +277,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               }`}
             >
               <Activity className="w-3.5 h-3.5" />
-              <span>5. Control & Turno</span>
+              <span>6. Control & Turno</span>
             </button>
           </nav>
 
@@ -288,60 +306,17 @@ export const Navbar: React.FC<NavbarProps> = ({
             {isAuthenticated && user ? (
               <div className="flex items-center space-x-2">
                 {/* User Pill */}
-                <div className={`flex items-center space-x-2 pl-2.5 pr-2 py-1 rounded-xl text-xs border ${
-                  permissions.isAdmin 
-                    ? 'bg-indigo-50/90 border-indigo-200 text-indigo-950'
-                    : 'bg-blue-50/90 border-blue-200 text-blue-950'
-                }`}>
+                <div className="flex items-center space-x-2 pl-2.5 pr-2 py-1 rounded-xl text-xs border bg-blue-50/90 border-blue-200 text-blue-950">
                   <div className="flex items-center space-x-1.5">
-                    {permissions.isAdmin ? (
-                      <div className="w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold shadow-xs">
-                        <Crown className="w-3.5 h-3.5 text-amber-300" />
-                      </div>
-                    ) : (
-                      <div className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold shadow-xs">
-                        <User className="w-3.5 h-3.5" />
-                      </div>
-                    )}
+                    <div className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold shadow-xs">
+                      <User className="w-3.5 h-3.5" />
+                    </div>
                     <div className="text-left hidden sm:block">
                       <div className="font-bold leading-tight">
                         {user.username}
                       </div>
-                      <div className="text-[10px] text-slate-500 capitalize leading-tight">
-                        {permissions.isAdmin ? 'Administrador' : 'Usuario Operador'}
-                      </div>
                     </div>
                   </div>
-
-                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                    permissions.isAdmin
-                      ? 'bg-indigo-700 text-white shadow-2xs'
-                      : 'bg-blue-700 text-white shadow-2xs'
-                  }`}>
-                    {user.role}
-                  </span>
-
-                  {/* Admin User Management Button */}
-                  {permissions.isAdmin ? (
-                    <button
-                      type="button"
-                      onClick={fetchAdminUsers}
-                      disabled={loadingUsers}
-                      className="ml-1 p-1 text-indigo-700 hover:text-indigo-900 hover:bg-indigo-100 rounded-md transition-colors cursor-pointer"
-                      title="Panel de Administración y Usuarios"
-                    >
-                      <Users className="w-3.5 h-3.5" />
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setShowUserProfileModal(true)}
-                      className="ml-1 p-1 text-blue-700 hover:text-blue-900 hover:bg-blue-100 rounded-md transition-colors cursor-pointer"
-                      title="Ver información de sesión y atajos"
-                    >
-                      <Info className="w-3.5 h-3.5" />
-                    </button>
-                  )}
                 </div>
 
                 {/* Logout Button */}
@@ -407,20 +382,31 @@ export const Navbar: React.FC<NavbarProps> = ({
               )}
             </button>
 
+
             <button
               type="button"
-              onClick={() => handleSelect('consulta_pai_adres')}
+              onClick={() => handleSelect('consulta_pai')}
               className={`inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                currentMod === 'consulta_pai_adres'
-                  ? 'bg-purple-700 text-white shadow-xs'
+                currentMod === 'consulta_pai'
+                  ? 'bg-blue-700 text-white shadow-xs'
                   : 'text-slate-600 hover:text-slate-900 bg-white border border-slate-200'
               }`}
             >
-              <ShieldCheck className="w-3 h-3" />
-              <span>3. PAI & ADRES</span>
-              <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-purple-100 text-purple-800">
-                383
-              </span>
+              <Baby className="w-3 h-3" />
+              <span>3. PAIWEB</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleSelect('consulta_comprobador')}
+              className={`inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                currentMod === 'consulta_comprobador'
+                  ? 'bg-indigo-700 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 bg-white border border-slate-200'
+              }`}
+            >
+              <Database className="w-3 h-3" />
+              <span>4. Comprobador</span>
             </button>
 
             <button
@@ -433,7 +419,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               }`}
             >
               <Users className="w-3 h-3" />
-              <span>4. Directorio</span>
+              <span>5. Directorio</span>
             </button>
 
             <button
@@ -446,7 +432,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               }`}
             >
               <Activity className="w-3 h-3" />
-              <span>5. Control</span>
+              <span>6. Control</span>
             </button>
           </div>
         </div>
@@ -523,7 +509,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     Cuentas Registradas ({adminUsersList.length})
                   </h4>
                   <p className="text-[11px] text-slate-500">
-                    Roles autorizados para transcripción y consulta
+                    Operadores autorizados para transcripción y consulta
                   </p>
                 </div>
                 <button
@@ -568,29 +554,16 @@ export const Navbar: React.FC<NavbarProps> = ({
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-700 mb-1">Contraseña</label>
-                      <input
-                        type="password"
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        placeholder="••••••••"
-                        className="w-full px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-700 mb-1">Rol Asignado</label>
-                      <select
-                        value={newRole}
-                        onChange={(e) => setNewRole(e.target.value as any)}
-                        className="w-full px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                      >
-                        <option value="usuario">Usuario (Operador / Digitador)</option>
-                        <option value="admin">Admin (Control Total)</option>
-                      </select>
-                    </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Contraseña</label>
+                    <input
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="w-full px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
+                      required
+                    />
                   </div>
 
                   <div className="flex justify-end pt-1">
@@ -613,12 +586,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                   return (
                     <div key={u.id} className="p-3.5 flex items-center justify-between text-xs hover:bg-slate-50 transition-colors">
                       <div className="flex items-center space-x-3">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${
-                          u.role === 'admin'
-                            ? 'bg-indigo-100 text-indigo-700 border border-indigo-200'
-                            : 'bg-blue-100 text-blue-700 border border-blue-200'
-                        }`}>
-                          {u.role === 'admin' ? '👑' : '👤'}
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs bg-blue-100 text-blue-700 border border-blue-200">
+                          <User className="w-4 h-4" />
                         </div>
                         <div>
                           <div className="font-bold text-slate-900 flex items-center space-x-2">
@@ -628,13 +597,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                                 Tú
                               </span>
                             )}
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                              u.role === 'admin'
-                                ? 'bg-indigo-600 text-white'
-                                : 'bg-blue-600 text-white'
-                            }`}>
-                              {u.role}
-                            </span>
                           </div>
                           <div className="text-slate-500 text-[11px] mt-0.5">{u.name}</div>
                         </div>
@@ -695,16 +657,13 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <div>
                   <div className="font-bold text-slate-900 text-sm">{user?.name || user?.username}</div>
                   <div className="text-slate-500">Usuario activo: <strong className="font-mono text-slate-800">{user?.username}</strong></div>
-                  <span className="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-600 text-white uppercase">
-                    ROL {user?.role}
-                  </span>
                 </div>
               </div>
 
               <div className="space-y-2">
                 <h4 className="font-bold text-slate-900 flex items-center space-x-1.5">
                   <Sparkles className="w-3.5 h-3.5 text-blue-600" />
-                  <span>Funcionalidades Especiales de Tu Rol:</span>
+                  <span>Funcionalidades del Aplicativo SISVAN:</span>
                 </h4>
                 <ul className="space-y-1.5 text-slate-600 pl-1">
                   <li className="flex items-start space-x-1.5">
@@ -717,7 +676,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   </li>
                   <li className="flex items-start space-x-1.5">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><strong>Consultas PAI y ADRES:</strong> Búsqueda masiva y cruce con base SISVESO.</span>
+                    <span><strong>Consultas PAI y ADRES:</strong> Búsqueda masiva y cruce con base SISVAN.</span>
                   </li>
                   <li className="flex items-start space-x-1.5">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />

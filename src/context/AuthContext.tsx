@@ -136,6 +136,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.warn('Error al cerrar sesión:', err);
     } finally {
       localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem('pai_active_token');
+      localStorage.removeItem('pai_operator_info');
       setToken(null);
       setUser(null);
     }
