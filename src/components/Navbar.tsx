@@ -21,7 +21,8 @@ import {
   X,
   AlertTriangle,
   Baby,
-  Database
+  Database,
+  RotateCcw
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getRolePermissions, AppModule } from '../types';
@@ -222,35 +223,17 @@ export const Navbar: React.FC<NavbarProps> = ({
               type="button"
               onClick={() => handleSelect('consulta_pai')}
               className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                currentMod === 'consulta_pai'
+                currentMod === 'consulta_pai' || currentMod === 'consulta_comprobador'
                   ? 'bg-blue-700 text-white shadow-xs'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
             >
               <Baby className="w-3.5 h-3.5" />
-              <span>3. PAIWEB Vacunación</span>
+              <span>3. PAIWEB & Comprobador</span>
               <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
-                currentMod === 'consulta_pai' ? 'bg-blue-900 text-blue-200' : 'bg-blue-100 text-blue-800'
+                currentMod === 'consulta_pai' || currentMod === 'consulta_comprobador' ? 'bg-blue-900 text-blue-200' : 'bg-blue-100 text-blue-800'
               }`}>
-                PAI
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleSelect('consulta_comprobador')}
-              className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                currentMod === 'consulta_comprobador'
-                  ? 'bg-purple-700 text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
-              }`}
-            >
-              <Database className="w-3.5 h-3.5" />
-              <span>4. Comprobador</span>
-              <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
-                currentMod === 'consulta_comprobador' ? 'bg-purple-900 text-purple-200' : 'bg-purple-100 text-purple-800'
-              }`}>
-                SDS
+                PAI + SDS
               </span>
             </button>
 
@@ -264,7 +247,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               }`}
             >
               <Users className="w-3.5 h-3.5" />
-              <span>5. Directorio</span>
+              <span>4. Directorio</span>
             </button>
 
             <button
@@ -277,7 +260,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               }`}
             >
               <Activity className="w-3.5 h-3.5" />
-              <span>6. Control & Turno</span>
+              <span>5. Control & Turno</span>
             </button>
           </nav>
 
@@ -318,6 +301,23 @@ export const Navbar: React.FC<NavbarProps> = ({
                     </div>
                   </div>
                 </div>
+
+                {/* Reset App Button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (window.confirm('¿Deseas reiniciar completamente el aplicativo y limpiar la memoria temporal?')) {
+                      localStorage.clear();
+                      sessionStorage.clear();
+                      window.location.reload();
+                    }
+                  }}
+                  className="inline-flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-all cursor-pointer"
+                  title="Reiniciar completamente el aplicativo y limpiar caché"
+                >
+                  <RotateCcw className="w-3.5 h-3.5 text-blue-600" />
+                  <span className="hidden xl:inline">Reiniciar</span>
+                </button>
 
                 {/* Logout Button */}
                 <button
@@ -387,26 +387,13 @@ export const Navbar: React.FC<NavbarProps> = ({
               type="button"
               onClick={() => handleSelect('consulta_pai')}
               className={`inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                currentMod === 'consulta_pai'
+                currentMod === 'consulta_pai' || currentMod === 'consulta_comprobador'
                   ? 'bg-blue-700 text-white shadow-xs'
                   : 'text-slate-600 hover:text-slate-900 bg-white border border-slate-200'
               }`}
             >
               <Baby className="w-3 h-3" />
-              <span>3. PAIWEB</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleSelect('consulta_comprobador')}
-              className={`inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                currentMod === 'consulta_comprobador'
-                  ? 'bg-indigo-700 text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900 bg-white border border-slate-200'
-              }`}
-            >
-              <Database className="w-3 h-3" />
-              <span>4. Comprobador</span>
+              <span>3. PAI & Comprobador</span>
             </button>
 
             <button
@@ -419,7 +406,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               }`}
             >
               <Users className="w-3 h-3" />
-              <span>5. Directorio</span>
+              <span>4. Directorio</span>
             </button>
 
             <button
@@ -432,7 +419,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               }`}
             >
               <Activity className="w-3 h-3" />
-              <span>6. Control</span>
+              <span>5. Control</span>
             </button>
           </div>
         </div>

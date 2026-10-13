@@ -25,9 +25,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 }) => {
   const { login } = useAuth();
 
-  // Login form state
-  const [loginUsername, setLoginUsername] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
+  // Login form state - Default to requested admin / admin26
+  const [loginUsername, setLoginUsername] = useState('admin');
+  const [loginPassword, setLoginPassword] = useState('admin26');
   const [showLoginPassword, setShowLoginPassword] = useState(false);
 
   // Status state
@@ -154,7 +154,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-xl text-sm font-bold shadow-xs hover:shadow transition-all flex items-center justify-center space-x-2"
+              className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-xl text-sm font-bold shadow-xs hover:shadow transition-all flex items-center justify-center space-x-2 cursor-pointer"
             >
               {isSubmitting ? (
                 <span>Iniciando sesión...</span>
@@ -167,10 +167,49 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </button>
           </form>
 
-          <div className="pt-2 text-center">
+          {/* Quick Access Helper */}
+          <div className="pt-2 border-t border-slate-100">
+            <p className="text-[11px] font-semibold text-slate-500 mb-2">
+              Credenciales de acceso rápido predeterminadas:
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setLoginUsername('usuario');
+                  setLoginPassword('usuario26');
+                  setError(null);
+                }}
+                className="p-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-blue-50 hover:border-blue-300 text-left transition-all cursor-pointer"
+              >
+                <div className="text-[11px] font-bold text-slate-800">Operador</div>
+                <div className="text-[10px] text-slate-500 font-mono">usuario / usuario26</div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setLoginUsername('admin');
+                  setLoginPassword('admin26');
+                  setError(null);
+                }}
+                className="p-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-300 text-left transition-all cursor-pointer"
+              >
+                <div className="text-[11px] font-bold text-indigo-900">Administrador</div>
+                <div className="text-[10px] text-slate-500 font-mono">admin / admin26</div>
+              </button>
+            </div>
+            {process.env.AUTH_USERS && (
+              <p className="text-[10px] text-slate-400 mt-2 text-center">
+                También puedes ingresar con los usuarios configurados en tus variables de entorno.
+              </p>
+            )}
+          </div>
+
+          <div className="pt-1 text-center">
             <p className="text-[11px] text-slate-400 flex items-center justify-center space-x-1">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 inline" />
-              <span>Conexión protegida y autenticada con server.ts</span>
+              <span>Conexión cifrada y autenticada con backend SISVAN</span>
             </p>
           </div>
         </div>

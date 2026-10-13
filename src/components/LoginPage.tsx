@@ -8,63 +8,23 @@ import {
   AlertCircle, 
   ArrowRight,
   FileSpreadsheet,
-  Baby,
+  Sparkles,
   CheckCircle2,
-  Sparkles
+  KeyRound
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export const LoginPage: React.FC = () => {
   const { login } = useAuth();
 
-  // Modo de ingreso: 'pai' (Acceso PAIWEB integrado) o 'estandar' (Usuario/Contraseña)
-  const [activeTab, setActiveTab] = useState<'pai' | 'estandar'>('pai');
-
-  // Campos PAI
-  const [paiUsername, setPaiUsername] = useState('');
-  const [operatorName, setOperatorName] = useState('');
-
-  // Campos estándar
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  // Credenciales requeridas y predeterminadas: admin / admin26
+  const [username, setUsername] = useState('admin');
+  const [password, setPassword] = useState('admin26');
   const [showPassword, setShowPassword] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Acceso integrado con PAIWEB (100% dentro de la web, sin abrir pestañas externas)
-  const handlePaiSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-
-    const cleanUser = paiUsername.trim();
-    if (!cleanUser) {
-      setError('Por favor ingresa tu usuario o número de cédula institucional.');
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const paiSession = {
-        username: cleanUser,
-        name: operatorName.trim() || cleanUser,
-        authenticated: true,
-      };
-      localStorage.setItem('pai_user_session', JSON.stringify(paiSession));
-      localStorage.setItem('comprobador_user_session', JSON.stringify(paiSession));
-      
-      const res = await login(cleanUser, 'PAIWEB-SESSION-AUTH');
-      if (!res.success) {
-        setError(res.error || 'Error al iniciar sesión con usuario PAI.');
-      }
-    } catch (err: any) {
-      setError(err?.message || 'Error de conexión con el servidor.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // Acceso estándar con usuario y contraseña
   const handleStandardSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -79,10 +39,27 @@ export const LoginPage: React.FC = () => {
     try {
       const res = await login(cleanUser, password);
       if (!res.success) {
-        setError(res.error || 'Error al iniciar sesión. Verifique los datos ingresados.');
+        setError(res.error || 'Credenciales incorrectas. Verifique usuario y contraseña.');
       }
     } catch (err: any) {
       setError(err?.message || 'Error de conexión con el servidor.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleQuickLoginAdmin = async () => {
+    setUsername('admin');
+    setPassword('admin26');
+    setError(null);
+    setIsSubmitting(true);
+    try {
+      const res = await login('admin', 'admin26');
+      if (!res.success) {
+        setError(res.error || 'Error al iniciar sesión como administrador.');
+      }
+    } catch (err: any) {
+      setError(err?.message || 'Error de conexión.');
     } finally {
       setIsSubmitting(false);
     }
@@ -114,44 +91,8 @@ export const LoginPage: React.FC = () => {
               Sistema SISVAN Digital
             </h1>
             <p className="text-xs text-slate-400 mt-1 max-w-xs mx-auto">
-              Subred Integrada de Servicios de Salud Sur E.S.E. · PAIWEB & Comprobador
+              Subred Integrada de Servicios de Salud Sur E.S.E. · Inicio de Sesión
             </p>
-          </div>
-
-          {/* Selector de Modo de Acceso integrado */}
-          <div className="bg-slate-100 p-1.5 flex border-b border-slate-200">
-            <button
-              type="button"
-              onClick={() => {
-                setActiveTab('pai');
-                setError(null);
-              }}
-              className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${
-                activeTab === 'pai'
-                  ? 'bg-white text-blue-700 shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <Baby className="w-3.5 h-3.5 text-blue-600" />
-              <span>Acceso PAIWEB</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setActiveTab('estandar');
-                setError(null);
-              }}
-              className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${
-                activeTab === 'estandar'
-                  ? 'bg-white text-slate-900 shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <User className="w-3.5 h-3.5" />
-              <span>Acceso Usuario</span>
-            </button>
           </div>
 
           {/* Formulario */}
@@ -163,133 +104,98 @@ export const LoginPage: React.FC = () => {
               </div>
             )}
 
-            {/* PESTAÑA 1: INGRESO CON PAIWEB (INTEGRADO EN PÁGINA) */}
-            {activeTab === 'pai' && (
-              <form onSubmit={handlePaiSubmit} className="space-y-4 animate-in fade-in">
-                <div className="p-3.5 bg-blue-50/80 border border-blue-200 rounded-2xl space-y-1 text-xs">
-                  <div className="flex items-center space-x-1.5 text-blue-950 font-bold">
-                    <Sparkles className="w-3.5 h-3.5 text-blue-600" />
-                    <span>Integración Directa PAIWEB</span>
+            <form onSubmit={handleStandardSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-800 mb-1.5 uppercase tracking-wider">
+                  Usuario Administrador
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <User className="w-4 h-4" />
                   </div>
-                  <p className="text-slate-600 text-[11px] leading-relaxed">
-                    Ingresa con tu usuario o cédula institucional. Accederás de inmediato a los módulos de PAIWEB Vacunación, Comprobador de Derechos y Digitalización.
-                  </p>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-800 mb-1 uppercase tracking-wider">
-                    Usuario / Cédula PAI
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                      <User className="w-4 h-4" />
-                    </div>
-                    <input
-                      type="text"
-                      value={paiUsername}
-                      onChange={(e) => setPaiUsername(e.target.value)}
-                      placeholder="ej: 1025530378 o usuario asignado"
-                      className="w-full pl-10 pr-3.5 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all font-mono"
-                      required
-                      autoFocus
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-800 mb-1 uppercase tracking-wider">
-                    Nombre del Operador <span className="text-[10px] text-slate-400 font-normal">(Opcional)</span>
-                  </label>
                   <input
                     type="text"
-                    value={operatorName}
-                    onChange={(e) => setOperatorName(e.target.value)}
-                    placeholder="ej: Carlos Gómez (Vacunador Subred Sur)"
-                    className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="admin"
+                    className="w-full pl-10 pr-3.5 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all font-mono"
+                    required
+                    autoFocus
                   />
                 </div>
+              </div>
 
-                <div className="pt-2">
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-xl text-sm font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center space-x-2 disabled:opacity-50 cursor-pointer"
-                  >
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>{isSubmitting ? 'Iniciando sesión...' : 'Entrar al Sistema con PAIWEB'}</span>
-                  </button>
-                </div>
-              </form>
-            )}
-
-            {/* PESTAÑA 2: INGRESO ESTÁNDAR (USUARIO Y CONTRASEÑA) */}
-            {activeTab === 'estandar' && (
-              <form onSubmit={handleStandardSubmit} className="space-y-4 animate-in fade-in">
-                <div>
-                  <label className="block text-xs font-bold text-slate-800 mb-1.5 uppercase tracking-wider">
-                    Usuario
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                      <User className="w-4 h-4" />
-                    </div>
-                    <input
-                      type="text"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      placeholder="Ingresa tu usuario institucional"
-                      className="w-full pl-10 pr-3.5 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-800 mb-1.5 uppercase tracking-wider">
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider">
                     Contraseña
                   </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                      <Lock className="w-4 h-4" />
-                    </div>
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="••••••••••••"
-                      className="w-full pl-10 pr-10 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all font-mono"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer"
-                      tabIndex={-1}
-                    >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
+                  <span className="text-[11px] text-blue-600 font-mono font-medium">admin26</span>
                 </div>
-
-                <div className="pt-2">
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <Lock className="w-4 h-4" />
+                  </div>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="admin26"
+                    className="w-full pl-10 pr-10 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all font-mono"
+                    required
+                  />
                   <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-sm font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center space-x-2 disabled:opacity-50 cursor-pointer"
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer"
+                    tabIndex={-1}
                   >
-                    <span>{isSubmitting ? 'Verificando...' : 'Iniciar Sesión'}</span>
-                    <ArrowRight className="w-4 h-4" />
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
-              </form>
-            )}
+              </div>
 
-            <div className="mt-6 pt-5 border-t border-slate-100 text-center">
-              <p className="text-xs text-slate-500">
-                Todo el proceso se realiza 100% dentro de esta página web institucional.
+              <div className="pt-2">
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-xl text-sm font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center space-x-2 disabled:opacity-50 cursor-pointer"
+                >
+                  <span>{isSubmitting ? 'Verificando credenciales...' : 'Iniciar Sesión'}</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            </form>
+
+            {/* Acceso Rápido Administrador */}
+            <div className="mt-5 p-3.5 bg-blue-50/70 border border-blue-200 rounded-2xl space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-blue-950 flex items-center space-x-1.5">
+                  <KeyRound className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Acceso Administrador Solicitado</span>
+                </span>
+                <span className="text-[10px] font-mono bg-blue-200 text-blue-900 font-bold px-2 py-0.5 rounded">
+                  admin / admin26
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={handleQuickLoginAdmin}
+                disabled={isSubmitting}
+                className="w-full py-2 px-3 bg-white hover:bg-blue-100/60 border border-blue-300 text-blue-800 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1.5 shadow-2xs cursor-pointer"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+                <span>Ingresar como Administrador (1 Clic)</span>
+              </button>
+            </div>
+
+            <div className="mt-5 pt-4 border-t border-slate-100 text-center space-y-2">
+              <p className="text-[11px] text-slate-500 flex items-center justify-center space-x-1">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 inline" />
+                <span>El ingreso a PAIWEB y comprobador se solicita directamente dentro del aplicativo.</span>
               </p>
-              <p className="text-[10px] text-slate-400 mt-1.5">
-                Subred Integrada de Servicios de Salud Sur E.S.E. · SISVAN Digital
+              <p className="text-[10px] text-slate-400">
+                Subred Integrada de Servicios de Salud Sur E.S.E. · SISVAN Digital 2026
               </p>
             </div>
           </div>

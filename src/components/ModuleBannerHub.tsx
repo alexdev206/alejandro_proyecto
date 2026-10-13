@@ -88,26 +88,16 @@ export const ModuleBannerHub: React.FC<ModuleBannerHubProps> = ({
     {
       id: 'consulta_pai' as AppModule,
       number: '03',
-      title: 'PAIWEB · Vacunación Infantil',
-      shortTitle: 'PAIWEB Vacunas',
-      subtitle: 'Módulo pediátrico de inmunización, esquemas biológicos y registro SISVAN',
+      title: 'PAIWEB & Comprobador de Derechos',
+      shortTitle: 'PAI & Comprobador',
+      subtitle: 'Módulo unificado de vacunación nominal PAIWEB y comprobación de aseguramiento ADRES / SDS',
       icon: Baby,
       accent: 'blue',
-      badge: 'PAIWEB 2.0',
-    },
-    {
-      id: 'consulta_comprobador' as AppModule,
-      number: '04',
-      title: 'Comprobador Distrital de Derechos',
-      shortTitle: 'Comprobador Bogotá',
-      subtitle: 'Aseguramiento en Bogotá D.C., asignación a Subred Sur y clasificación SISBEN',
-      icon: Database,
-      accent: 'purple',
-      badge: 'SDS Bogotá',
+      badge: 'PAI + SDS',
     },
     {
       id: 'patients' as AppModule,
-      number: '05',
+      number: '04',
       title: 'Directorio Clínico',
       shortTitle: 'Directorio SISVAN',
       subtitle: 'Directorio consolidado de pacientes, alertas y ficha nominal',
@@ -117,7 +107,7 @@ export const ModuleBannerHub: React.FC<ModuleBannerHubProps> = ({
     },
     {
       id: 'audit' as AppModule,
-      number: '06',
+      number: '05',
       title: 'Control & Turno',
       shortTitle: 'Turno & Auditoría',
       subtitle: isAdmin 
@@ -129,7 +119,7 @@ export const ModuleBannerHub: React.FC<ModuleBannerHubProps> = ({
     },
   ];
 
-  const currentMod = modules.find((m) => m.id === activeModule) || modules[0];
+  const currentMod = modules.find((m) => m.id === activeModule || (activeModule === 'consulta_comprobador' && m.id === 'consulta_pai')) || modules[0];
 
   // Calculate field statistics if data is present
   const fieldStats = React.useMemo(() => {

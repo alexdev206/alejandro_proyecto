@@ -99,6 +99,10 @@ function compressImage(
         return;
       }
 
+      // Fill with solid white background to preserve transparent PNGs
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, width, height);
+
       // Draw with smooth scaling
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';

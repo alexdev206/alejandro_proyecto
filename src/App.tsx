@@ -27,13 +27,12 @@ import { DocumentViewer } from './components/DocumentViewer';
 import { ExportBar } from './components/ExportBar';
 import { AuthModal } from './components/AuthModal';
 import { LoginPage } from './components/LoginPage';
-import { ConsultaPaiView } from './components/ConsultaPaiView';
-import { ConsultaComprobadorView } from './components/ConsultaComprobadorView';
+import { BusquedaModulo } from './components/BusquedaModulo';
 import { PatientsDirectoryView } from './components/PatientsDirectoryView';
 import { AuditControlView } from './components/AuditControlView';
 import { PatientFieldInspector } from './components/PatientFieldInspector';
 import { useAuth } from './context/AuthContext';
-import { ScanResult, ScanOptions, ExtractedRow, AppModule, getRolePermissions } from './types';
+import { ScanResult, ScanOptions, ExtractedRow, AppModule, ColumnDefinition, getRolePermissions } from './types';
 import { validateAllRows } from './utils/validation';
 import { downloadCsv, downloadExcel, downloadShiftReport } from './utils/export';
 import { SampleDocument, SAMPLE_DOCUMENTS } from './data/samplePdfs';
@@ -47,11 +46,14 @@ export default function App() {
   const [activeModule, setActiveModuleState] = useState<AppModule>(() => {
     try {
       const saved = localStorage.getItem('sisvan_active_module');
-      if (saved && ['scanner', 'table', 'consulta_pai', 'consulta_comprobador', 'patients', 'audit'].includes(saved)) {
+      if (saved && ['scanner', 'table', 'consulta_pai', 'patients', 'audit'].includes(saved)) {
         return saved as AppModule;
       }
+      if (saved === 'consulta_comprobador' || saved === 'consulta_pai_adres') {
+        return 'consulta_pai';
+      }
     } catch (_e) {}
-    return 'consulta_pai';
+    return 'scanner';
   });
 
   const setActiveModule = (mod: AppModule) => {
@@ -63,6 +65,7 @@ export default function App() {
   
   // Field-level direct access & filter state
   const [selectedFieldFilter, setSelectedFieldFilter] = useState<string | null>(null);
+  const [showExternalQueryPanel, setShowExternalQueryPanel] = useState<boolean>(false);
   const [inspectedRow, setInspectedRow] = useState<ExtractedRow | null>(null);
   const [isInspectorOpen, setIsInspectorOpen] = useState(false);
 
@@ -382,6 +385,32 @@ export default function App() {
     });
   };
 
+  const handleApplyEnrichment = (updatedCols: ColumnDefinition[], updatedRows: ExtractedRow[]) => {
+    setDatabaseRows(updatedRows);
+    if (scanResult) {
+      let reviewCount = 0;
+      let illegibleCount = 0;
+      updatedRows.forEach(row => {
+        if (row.reviewFlags && row.reviewFlags.length > 0) reviewCount++;
+        for (const k of Object.keys(row.validation || {})) {
+          if (row.validation[k]?.status === 'ilegible') illegibleCount++;
+        }
+      });
+      setScanResult({
+        ...scanResult,
+        columns: updatedCols,
+        rows: updatedRows,
+        summary: {
+          totalRows: updatedRows.length,
+          validRows: updatedRows.length - reviewCount,
+          reviewNeededCount: reviewCount,
+          illegibleCount,
+        },
+      });
+    }
+    triggerToast('✨ Matriz enriquecida con columnas PAI y ADRES.');
+  };
+
   const handleReset = () => {
     if (uploadedFileUrl) {
       URL.revokeObjectURL(uploadedFileUrl);
@@ -697,8 +726,36 @@ export default function App() {
                   options={options}
                   onOptionsChange={setOptions}
                   onReset={handleReset}
-                  onOpenConsultaPaiAdres={() => setActiveModule('consulta_comprobador')}
+                  onOpenConsultaPaiAdres={() => setShowExternalQueryPanel(!showExternalQueryPanel)}
                 />
+
+                {/* Panel Consultas Externas (PAI & Comprobador de Derechos) */}
+                {showExternalQueryPanel && (
+                  <div className="bg-slate-50 border border-purple-200 rounded-2xl p-5 shadow-xs space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <ShieldCheck className="w-5 h-5 text-purple-600" />
+                        <h3 className="text-sm font-bold text-slate-900">
+                          Consultas Externas PAIWEB & Comprobador de Derechos ADRES
+                        </h3>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setShowExternalQueryPanel(false)}
+                        className="text-xs font-semibold text-slate-500 hover:text-slate-800 bg-white border border-slate-200 px-2.5 py-1 rounded-lg cursor-pointer"
+                      >
+                        Cerrar panel
+                      </button>
+                    </div>
+                    <BusquedaModulo
+                      scannedColumns={scanResult.columns}
+                      scannedRows={scanResult.rows}
+                      onApplyEnrichment={handleApplyEnrichment}
+                      onTriggerToast={triggerToast}
+                      isEmbedded={true}
+                    />
+                  </div>
+                )}
 
                 {/* Column Quick Focus Bar */}
                 {scanResult.columns.length > 0 && (
@@ -836,35 +893,19 @@ export default function App() {
           </motion.div>
         )}
 
-        {/* MODULE 3: PAIWEB VACUNACIÓN */}
-        {activeModule === 'consulta_pai' && (
+        {/* MODULE 3: BÚSQUEDA PAI / COMPROBADOR (MÓDULO busqueda-js INTEGRADO) */}
+        {(activeModule === 'consulta_pai' || activeModule === 'consulta_comprobador' || activeModule === 'consulta_pai_adres') && (
           <motion.div
-            key="module-consulta-pai"
+            key="module-busqueda"
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
             className="space-y-4"
           >
-            <ConsultaPaiView
-              excelDatabaseRows={scanResult?.rows && scanResult.rows.length > 0 ? scanResult.rows : databaseRows}
-              onUpdateDatabaseRows={handleUpdateDatabaseRows}
-              onTriggerToast={triggerToast}
-            />
-          </motion.div>
-        )}
-
-        {/* MODULE 5: COMPROBADOR DE DERECHOS (APARTE DE PAI Y ADRES) */}
-        {activeModule === 'consulta_comprobador' && (
-          <motion.div
-            key="module-consulta-comprobador"
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            className="space-y-4"
-          >
-            <ConsultaComprobadorView
-              excelDatabaseRows={scanResult?.rows && scanResult.rows.length > 0 ? scanResult.rows : databaseRows}
-              onUpdateDatabaseRows={handleUpdateDatabaseRows}
+            <BusquedaModulo
+              scannedColumns={scanResult?.columns || []}
+              scannedRows={scanResult?.rows && scanResult.rows.length > 0 ? scanResult.rows : databaseRows}
+              onApplyEnrichment={handleApplyEnrichment}
               onTriggerToast={triggerToast}
             />
           </motion.div>
@@ -883,7 +924,7 @@ export default function App() {
               rows={scanResult?.rows && scanResult.rows.length > 0 ? scanResult.rows : databaseRows}
               columns={scanResult?.columns || []}
               onUpdateRows={handleRowsChange}
-              onOpenConsultaPaiAdres={() => setActiveModule('consulta_comprobador')}
+              onOpenConsultaPaiAdres={() => setActiveModule('consulta_pai')}
               onTriggerToast={triggerToast}
             />
           </motion.div>
