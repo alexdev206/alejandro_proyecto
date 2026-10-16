@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SISVAN · Guía y Script de Consola F12 (PAI & Comprobador)</title>
+  <meta name="description" content="Automatización en consola F12 para consulta nominal en PAIWEB y Comprobador de Derechos de la Secretaría de Salud de Bogotá. Sin instalación ni extensiones.">
+  <style>
+    :root {
+      --bg: #0b1120;
+      --card-bg: #1e293b;
+      --card-border: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary: #10b981;
+      --primary-hover: #059669;
+      --accent: #38bdf8;
+      --accent-hover: #0284c7;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+      --code-bg: #030712;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.6;
+      padding: 24px 16px 60px 16px;
+    }
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 32px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--card-border);
+    }
+    .badge-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      color: #34d399;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      margin-bottom: 12px;
+    }
+    h1 {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #ffffff 40%, #94a3b8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .subtitle {
+      font-size: 15px;
+      color: var(--text-muted);
+      max-width: 700px;
+      margin: 0 auto;
+    }
+    .privacy-banner {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid var(--card-border);
+      border-left: 4px solid var(--primary);
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin-bottom: 28px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      font-size: 13.5px;
+    }
+    .privacy-banner b {
+      color: #34d399;
+    }
+    .actions-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 18px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      border: none;
+      transition: all 0.2s ease;
+    }
+    .btn-primary {
+      background: var(--primary);
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+    }
+    .btn-primary:hover {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+    }
+    .btn-secondary {
+      background: var(--card-bg);
+      color: var(--text-main);
+      border: 1px solid var(--card-border);
+    }
+    .btn-secondary:hover {
+      background: #283548;
+      border-color: #475569;
+    }
+    .btn-accent {
+      background: #0284c7;
+      color: #ffffff;
+    }
+    .btn-accent:hover {
+      background: #0369a1;
+    }
+    .steps-section {
+      margin-bottom: 36px;
+    }
+    .section-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .steps-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .step-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 18px;
+      display: flex;
+      gap: 16px;
+    }
+    .step-num {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      color: var(--accent);
+      font-weight: 800;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .step-content {
+      flex: 1;
+    }
+    .step-content h3 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: #ffffff;
+    }
+    .step-content p {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    .warning-box {
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin-top: 8px;
+      font-size: 13px;
+      color: #fde68a;
+    }
+    .warning-box code {
+      background: rgba(0, 0, 0, 0.4);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 700;
+      color: #fbbf24;
+      font-family: monospace;
+    }
+    .code-snippet {
+      background: var(--code-bg);
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 12.5px;
+      color: #e2e8f0;
+      overflow-x: auto;
+      margin: 8px 0;
+    }
+    .code-preview-container {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 32px;
+    }
+    .code-preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .code-scroll {
+      background: var(--code-bg);
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      padding: 14px;
+      font-family: monospace;
+      font-size: 11.5px;
+      color: #94a3b8;
+      height: 220px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #10b981;
+      color: #ffffff;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 14px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      display: none;
+      z-index: 10000;
+      animation: fadeIn 0.3s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .specs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 14px;
+      margin-bottom: 36px;
+    }
+    .spec-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .spec-card h4 {
+      font-size: 14px;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+    .spec-card ul {
+      list-style-type: disc;
+      padding-left: 20px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .spec-card li {
+      margin-bottom: 4px;
+    }
+    footer {
+      text-align: center;
+      font-size: 12px;
+      color: #64748b;
+      padding-top: 24px;
+      border-top: 1px solid var(--card-border);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="badge-tag">
+        <span>🛡️</span> Cero Instalación · 100% Navegador Chrome F12
+      </div>
+      <h1>SISVAN Bogotá · Automatización de Consulta en Consola</h1>
+      <p class="subtitle">
+        Consulta nominal masiva para <b>PAIWEB (Menores y Mayores)</b> y <b>Comprobador de Derechos (ADRES)</b> de la Secretaría Distrital de Salud en computadores restringidos sin privilegios de administrador.
+      </p>
+    </header>
+
+    <div class="privacy-banner">
+      <div style="font-size: 20px;">🔒</div>
+      <div>
+        <b>Estricta Política de Privacidad y Seguridad Institucional:</b>
+        Este script se ejecuta <u>exclusivamente dentro de tu navegador</u> en el dominio <code>appb.saludcapital.gov.co</code>. No realiza ninguna llamada a servidores externos, no envía datos personales a internet, no usa analíticas, ni solicita contraseñas. Todo el procesamiento y la generación del CSV ocurren de forma local en tu máquina.
+      </div>
+    </div>
+
+    <!-- BOTONES DE ACCIÓN RÁPIDA -->
+    <div class="actions-grid">
+      <button id="btn-copiar-principal" class="btn btn-primary" onclick="copiarScript()">
+        📋 Copiar Script al Portapapeles
+      </button>
+      <button class="btn btn-secondary" onclick="descargarScript()">
+        💾 Descargar consulta-consola.js
+      </button>
+      <button class="btn btn-secondary" onclick="descargarCsvEjemplo()">
+        📊 Descargar CSV de Ejemplo
+      </button>
+      <a href="https://appb.saludcapital.gov.co" target="_blank" rel="noreferrer" class="btn btn-accent">
+        🌐 Abrir Salud Capital ↗
+      </a>
+    </div>
+
+    <!-- GUÍA PASO A PASO -->
+    <section class="steps-section">
+      <h2 class="section-title"><span>🚀</span> Instrucciones Paso a Paso</h2>
+      <div class="steps-list">
+
+        <!-- PASO 1 -->
+        <div class="step-card">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h3>Abrir el portal oficial de la Secretaría de Salud</h3>
+            <p>
+              En tu navegador Google Chrome, ingresa a: <br>
+              <a href="https://appb.saludcapital.gov.co" target="_blank" rel="noreferrer" style="color: var(--accent); font-weight: 600; text-decoration: underline;">https://appb.saludcapital.gov.co</a>
+            </p>
+            <p>
+              Si vas a consultar el <b>PAIWEB</b>, inicia sesión previamente con tu usuario y contraseña institucional en <code>/pai/inicio/login.aspx</code>. (El Comprobador de Derechos no requiere sesión previa).
+            </p>
+          </div>
+        </div>
+
+        <!-- PASO 2 -->
+        <div class="step-card">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h3>Abrir la Consola de Desarrollador (F12)</h3>
+            <p>
+              Estando en la pestaña de <b>appb.saludcapital.gov.co</b>, presiona la tecla <b>F12</b> en tu teclado (o la combinación <kbd style="background: #334155; padding: 2px 6px; border-radius: 4px; font-family: monospace;">Ctrl + Shift + I</kbd>, o haz clic derecho en cualquier parte de la página y selecciona <b>"Inspeccionar"</b>).
+            </p>
+            <p>
+              Luego, en la barra superior de las herramientas de desarrollador, haz clic en la pestaña llamada <b>"Console"</b> (o <b>"Consola"</b>).
+            </p>
+          </div>
+        </div>
+
+        <!-- PASO 3 (ALERTA DE SEGURIDAD CHROME) -->
+        <div class="step-card" style="border-color: rgba(245, 158, 11, 0.4);">
+          <div class="step-num" style="background: rgba(245, 158, 11, 0.15); border-color: rgba(245, 158, 11, 0.4); color: var(--warn);">3</div>
+          <div class="step-content">
+            <h3 style="color: #fde68a;">⚠️ Advertencia de Seguridad de Google Chrome ("allow pasting")</h3>
+            <p>
+              Por motivos de seguridad, Google Chrome bloquea el pegado de scripts en la consola la primera vez y muestra una advertencia en letras rojas que dice: <i>"Warning: Don't paste code into the DevTools Console..."</i>.
+            </p>
+            <div class="warning-box">
+              <b>¿Cómo desbloquearlo en 5 segundos?</b><br>
+              1. Haz clic dentro de la línea de comandos de la consola.<br>
+              2. Escribe exactamente la frase: <code>allow pasting</code> (o <code>permitir pegar</code> si tu Chrome está en español).<br>
+              3. Presiona la tecla <kbd style="background: #000; padding: 2px 6px; border-radius: 4px;">Enter</kbd>.<br>
+              ¡Listo! A partir de ese momento Chrome te permitirá pegar cualquier código con normalidad.
+            </div>
+          </div>
+        </div>
+
+        <!-- PASO 4 -->
+        <div class="step-card">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <h3>Pegar el script y presionar Enter</h3>
+            <p>
+              Haz clic en el botón verde superior <b>"Copiar Script al Portapapeles"</b>, regresa a la consola de Chrome en Salud Capital, presiona <kbd style="background: #334155; padding: 2px 6px; border-radius: 4px;">Ctrl + V</kbd> y presiona <kbd style="background: #334155; padding: 2px 6px; border-radius: 4px;">Enter</kbd>.
+            </p>
+            <p>
+              Inmediatamente aparecerá en la esquina superior derecha de tu pantalla el <b>Panel Flotante Interactivo de SISVAN</b>.
+            </p>
+          </div>
+        </div>
+
+        <!-- PASO 5 -->
+        <div class="step-card">
+          <div class="step-num">5</div>
+          <div class="step-content">
+            <h3>Cargar el CSV, seleccionar portal y descargar</h3>
+            <p>
+              En el panel flotante:
+            </p>
+            <ul style="padding-left: 20px; font-size: 13.5px; color: var(--text-muted); margin-bottom: 8px;">
+              <li>Selecciona o arrastra tu archivo CSV (debe contener columnas <code>consecutivo</code> y <code>codigo</code> con separador <b>;</b> o <b>,</b>).</li>
+              <li>Elige el portal: <b>PAI Menores (pag=2)</b>, <b>PAI Mayores (pag=3)</b>, <b>PAI Auto (2 → 3)</b> o <b>Comprobador (ADRES)</b>.</li>
+              <li>Marca los campos que requieres extraer (por defecto están seleccionados los esenciales).</li>
+              <li>Presiona el botón verde <b>"▶ Iniciar"</b>.</li>
+            </ul>
+            <p>
+              El cronómetro calculará en vivo la velocidad (registros por minuto) y el tiempo restante. Al terminar, presiona <b>"📥 Descargar CSV de Resultados"</b> para obtener un archivo con formato UTF-8 con BOM y delimitador punto y coma (;), 100% compatible con Microsoft Excel.
+            </p>
+          </div>
+        </div>
+
+        <!-- PASO 6 (DIAGNÓSTICO) -->
+        <div class="step-card">
+          <div class="step-num">6</div>
+          <div class="step-content">
+            <h3>Mini-Diagnóstico Técnico Integrado</h3>
+            <p>
+              El script incluye una función de autodiagnóstico. Si alguna consulta falla o quieres verificar la conexión con los portales, puedes:
+            </p>
+            <ul style="padding-left: 20px; font-size: 13.5px; color: var(--text-muted);">
+              <li>Hacer clic en el botón <b>"🔍 Diag"</b> en el panel flotante.</li>
+              <li>O escribir directamente en la consola de Chrome la función: <code>diagnostico()</code> y presionar Enter.</li>
+            </ul>
+            <p style="margin-top: 6px;">
+              El diagnóstico verificará que el dominio sea <code>appb.saludcapital.gov.co</code>, validará cookies, creará el iframe interno y comprobará la respuesta HTTP de las rutas de vacunación y aseguramiento.
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ESPECIFICACIONES TÉCNICAS -->
+    <section>
+      <h2 class="section-title"><span>⚙️</span> Especificaciones y Compatibilidad</h2>
+      <div class="specs-grid">
+        <div class="spec-card">
+          <h4>Estructura del CSV de Entrada</h4>
+          <ul>
+            <li>Columnas: <code>consecutivo</code> y <code>codigo</code>.</li>
+            <li>Separador: Punto y coma (<code>;</code>) o coma (<code>,</code>).</li>
+            <li>Admite archivo con o sin encabezado.</li>
+            <li>Admite codificación UTF-8, ANSI o UTF-8 con BOM.</li>
+          </ul>
+        </div>
+        <div class="spec-card">
+          <h4>Portales Automatizados</h4>
+          <ul>
+            <li><b>PAI Menores:</b> Niños y niñas con esquema pediátrico (pag=2).</li>
+            <li><b>PAI Mayores:</b> Adolescentes y adultos (pag=3).</li>
+            <li><b>PAI Auto:</b> Busca en menores; si no está, busca en mayores.</li>
+            <li><b>Comprobador:</b> Base única distrital (BUDA) y Contributivo.</li>
+          </ul>
+        </div>
+        <div class="spec-card">
+          <h4>Datos Extraídos y Exportación</h4>
+          <ul>
+            <li>Nombres, apellidos y documento completo.</li>
+            <li>Fecha de nacimiento, sexo y género.</li>
+            <li>EPS/Aseguradora, régimen y estado de afiliación.</li>
+            <li>Dirección, barrio, localidad, UPZ y teléfonos.</li>
+            <li>Datos de la madre (en menores).</li>
+            <li>Descarga en CSV con BOM UTF-8 y delimitador <code>;</code>.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- VISOR Y CÓDIGO FUENTE EMBEBIDO -->
+    <div class="code-preview-container">
+      <div class="code-preview-header">
+        <span style="font-weight: 700; font-size: 14px;">Código de consulta-consola.js (Embebido)</span>
+        <button class="btn btn-primary" style="padding: 6px 14px; font-size: 12px;" onclick="copiarScript()">
+          📋 Copiar Código Completo
+        </button>
+      </div>
+      <div id="code-display" class="code-scroll"></div>
+    </div>
+
+    <footer>
+      SISVAN Bogotá · Sistema Integral de Vigilancia Alimentaria y Nutricional · Subred Sur E.S.E. / SDS Bogotá<br>
+      Solución técnica autónoma para ejecución en entornos corporativos de salud pública.
+    </footer>
+  </div>
+
+  <div id="toast" class="toast">✓ ¡Script copiado al portapapeles exitosamente!</div>
+
+  <script>
+    const SCRIPT_SOURCE = "/**\n * ==============================================================================\n * SISVAN & SALUD CAPITAL - SCRIPT AUTOCONTENIDO DE CONSOLA (F12)\n * ==============================================================================\n * Diseñado para ejecutarse directamente en la consola de Google Chrome (F12)\n * en el dominio: https://appb.saludcapital.gov.co\n *\n * Portales soportados:\n *  - PAI Menores:       /pai/vacunacion/datosBasicos.aspx?pag=2\n *  - PAI Mayores:       /pai/vacunacion/datosBasicos.aspx?pag=3\n *  - PAI Auto:          Prueba primero Menores (pag=2) y si no existe busca en Mayores (pag=3)\n *  - Comprobador:       /comprobadordederechos/Consulta.aspx (Contributivo / BUDA / Subsidiado)\n *\n * Características:\n *  - 100% Vanilla JavaScript (cero dependencias externas, cero librerías, cero CDN).\n *  - Cero llamadas a servidores externos (máxima privacidad y seguridad hospitalaria).\n *  - Interfaz flotante inyectada con controles de inicio, pausa/detener, métricas y descarga CSV.\n *  - Ejecución en iframe interno de mismo origen (evita que la recarga de página mate el script).\n *  - Parser y generador de CSV con BOM UTF-8 y delimitador punto y coma (;).\n *  - Cronómetro de tiempo real con cálculo de velocidad (regs/min) y estimación de fin.\n *  - Mini-diagnóstico integrado invocable desde el panel o escribiendo diagnostico() en la consola.\n * ==============================================================================\n */\n\n(function () {\n  'use strict';\n\n  // Si ya existía una instancia previa del panel, retirarla limpiamente\n  const PREV_PANEL = document.getElementById('sisvan-console-root');\n  if (PREV_PANEL) {\n    try {\n      PREV_PANEL.remove();\n    } catch (_e) {}\n  }\n\n  // ============================================================================\n  // 1. CONFIGURACIÓN, CATÁLOGOS Y SELECTORES ASP.NET WEBFORMS\n  // ============================================================================\n  const HOST_ESPERADO = 'appb.saludcapital.gov.co';\n  const ES_ORIGEN_OFICIAL = window.location.hostname.includes('saludcapital.gov.co');\n\n  const URLS = {\n    paiMenores: '/pai/vacunacion/datosBasicos.aspx?pag=2',\n    paiMayores: '/pai/vacunacion/datosBasicos.aspx?pag=3',\n    paiLogin: '/pai/inicio/login.aspx',\n    comprobador: '/comprobadordederechos/Consulta.aspx',\n  };\n\n  const CAMPOS_PAI_CATALOGO = [\n    { id: 'td', label: 'Tipo Documento', sel: '#ContentPlaceHolder1_ddl_TipoIdentificacion, #ContentPlaceHolder1_txb_TipoIdentificacion', tipo: 'select', grupo: 'basico' },\n    { id: 'nombre1', label: 'Primer Nombre', sel: '#ContentPlaceHolder1_txb_Nombre1', tipo: 'input', grupo: 'basico', fijo: true },\n    { id: 'nombre2', label: 'Segundo Nombre', sel: '#ContentPlaceHolder1_txb_Nombre2', tipo: 'input', grupo: 'basico' },\n    { id: 'apellido1', label: 'Primer Apellido', sel: '#ContentPlaceHolder1_txb_Apellido1', tipo: 'input', grupo: 'basico', fijo: true },\n    { id: 'apellido2', label: 'Segundo Apellido', sel: '#ContentPlaceHolder1_txb_Apellido2', tipo: 'input', grupo: 'basico' },\n    { id: 'fecha_nacimiento', label: 'Fecha Nacimiento', sel: '#ContentPlaceHolder1_txb_FechaNacimiento', tipo: 'input', grupo: 'basico' },\n    { id: 'sexo', label: 'Sexo Biológico', sel: '#ContentPlaceHolder1_ddl_Sexo, #ContentPlaceHolder1_txb_Sexo', tipo: 'select', grupo: 'basico' },\n    { id: 'genero', label: 'Género', sel: '#ContentPlaceHolder1_ddl_Genero', tipo: 'select', grupo: 'basico' },\n    { id: 'telefono1', label: 'Teléfono Principal', sel: '#ContentPlaceHolder1_txb_Telefono, #ContentPlaceHolder1_txb_Telefono1', tipo: 'input', grupo: 'contacto' },\n    { id: 'telefono2', label: 'Teléfono Secundario', sel: '#ContentPlaceHolder1_txb_Telefono2, #ContentPlaceHolder1_txb_Celular', tipo: 'input', grupo: 'contacto' },\n    { id: 'direccion', label: 'Dirección Residencia', sel: '#ContentPlaceHolder1_txb_Direccion', tipo: 'input', grupo: 'ubicacion' },\n    { id: 'direccionadicional', label: 'Dirección Adicional', sel: '#ContentPlaceHolder1_txb_DireccionAdicional', tipo: 'input', grupo: 'ubicacion' },\n    { id: 'departamento', label: 'Departamento', sel: '#ContentPlaceHolder1_ddl_Departamento', tipo: 'select', grupo: 'ubicacion' },\n    { id: 'municipio', label: 'Municipio', sel: '#ContentPlaceHolder1_ddl_Municipio', tipo: 'select', grupo: 'ubicacion' },\n    { id: 'localidad', label: 'Localidad', sel: '#ContentPlaceHolder1_ddl_Localidad', tipo: 'select', grupo: 'ubicacion' },\n    { id: 'upz', label: 'UPZ', sel: '#ContentPlaceHolder1_ddl_Upz, #ContentPlaceHolder1_txb_Upz', tipo: 'select', grupo: 'ubicacion' },\n    { id: 'barrio', label: 'Barrio', sel: '#ContentPlaceHolder1_ddl_Barrio, #ContentPlaceHolder1_txb_Barrio', tipo: 'select', grupo: 'ubicacion' },\n    { id: 'eapb', label: 'EAPB / Aseguradora EPS', sel: '#ContentPlaceHolder1_ddl_Aseguradora, #ContentPlaceHolder1_ddl_EAPB, #ContentPlaceHolder1_txb_Eapb', tipo: 'select', grupo: 'aseguramiento' },\n    { id: 'regimen', label: 'Régimen Afiliación', sel: '#ContentPlaceHolder1_ddl_Regimen', tipo: 'select', grupo: 'aseguramiento' },\n    { id: 'tdmadre', label: 'Tipo Doc Madre', sel: '#ContentPlaceHolder1_ddl_TipoIdentificacionMadre', tipo: 'select', grupo: 'madre' },\n    { id: 'docmadre', label: 'Número Doc Madre', sel: '#ContentPlaceHolder1_txb_NumeroIdentificacionMadre', tipo: 'input', grupo: 'madre' },\n    { id: 'nombrem1', label: 'Primer Nombre Madre', sel: '#ContentPlaceHolder1_txb_PrimerNombreMadre', tipo: 'input', grupo: 'madre' },\n    { id: 'nombrem2', label: 'Segundo Nombre Madre', sel: '#ContentPlaceHolder1_txb_SegundoNombreMadre', tipo: 'input', grupo: 'madre' },\n    { id: 'apellidomadre1', label: 'Primer Apellido Madre', sel: '#ContentPlaceHolder1_txb_PrimerApellidoMadre', tipo: 'input', grupo: 'madre' },\n    { id: 'apellidomadre2', label: 'Segundo Apellido Madre', sel: '#ContentPlaceHolder1_txb_SegundoApellidoMadre', tipo: 'input', grupo: 'madre' }\n  ];\n\n  const CAMPOS_COMPROBADOR_DEFAULT = [\n    { id: 'tabla_origen', label: 'Tabla Origen (Contributivo / BUDA)', checked: true },\n    { id: 'estado', label: 'Estado de Afiliación', checked: true },\n    { id: 'entidad', label: 'Entidad / EPS', checked: true },\n    { id: 'regimen', label: 'Régimen', checked: true },\n    { id: 'tipo_afiliado', label: 'Tipo Afiliado (Cotizante / Beneficiario)', checked: true },\n    { id: 'departamento', label: 'Departamento Afiliación', checked: true },\n    { id: 'municipio', label: 'Municipio Afiliación', checked: true },\n    { id: 'sexo_detalle', label: 'Sexo (Consultar Detalle)', checked: true }\n  ];\n\n  // ============================================================================\n  // 2. ESTADO GLOBAL DEL SCRIPT\n  // ============================================================================\n  const STATE = {\n    portal: 'pai_menores', // 'pai_menores' | 'pai_mayores' | 'pai_auto' | 'comprobador'\n    registros: [],        // [{ consecutivo, codigo, originalRow }]\n    resultados: [],       // registros enriquecidos\n    camposSeleccionadosPai: ['td', 'nombre2', 'apellido2', 'fecha_nacimiento', 'sexo', 'telefono1', 'direccion', 'localidad', 'barrio', 'eapb', 'regimen'],\n    camposComprobador: {\n      tabla_origen: true,\n      estado: true,\n      entidad: true,\n      regimen: true,\n      tipo_afiliado: true,\n      departamento: true,\n      municipio: true,\n      sexo_detalle: true\n    },\n    ejecutando: false,\n    detenerSolicitado: false,\n    indiceActual: 0,\n    startTime: 0,\n    timerInterval: null,\n    stats: {\n      total: 0,\n      exitosos: 0,\n      noEncontrados: 0,\n      errores: 0\n    },\n    retardoMs: 500,\n    workerIframe: null\n  };\n\n  // ============================================================================\n  // 3. UTILIDADES: CSV PARSER, EXPORTER Y FORMATTERS\n  // ============================================================================\n\n  /**\n   * Parsea un texto CSV detectando automáticamente separador (; o ,) y limpiando BOM\n   */\n  function parsearCSV(texto) {\n    if (!texto) return [];\n    // Quitar BOM UTF-8 si viene en el archivo\n    let clean = texto.replace(/^\\uFEFF/, '').trim();\n    if (!clean) return [];\n\n    const lineas = clean.split(/\\r?\\n/).filter(l => l.trim().length > 0);\n    if (lineas.length === 0) return [];\n\n    // Detectar separador por frecuencia en la primera línea\n    const comaCount = (lineas[0].match(/,/g) || []).length;\n    const puntoComaCount = (lineas[0].match(/;/g) || []).length;\n    const tabCount = (lineas[0].match(/\\t/g) || []).length;\n    let sep = ';';\n    if (tabCount > puntoComaCount && tabCount > comaCount) sep = '\\t';\n    else if (comaCount > puntoComaCount) sep = ',';\n\n    const parseLinea = (linea) => {\n      const valores = [];\n      let dentroComillas = false;\n      let valorActual = '';\n      for (let i = 0; i < linea.length; i++) {\n        const char = linea[i];\n        if (char === '\"') {\n          if (dentroComillas && linea[i + 1] === '\"') {\n            valorActual += '\"';\n            i++;\n          } else {\n            dentroComillas = !dentroComillas;\n          }\n        } else if (char === sep && !dentroComillas) {\n          valores.push(valorActual.trim());\n          valorActual = '';\n        } else {\n          valorActual += char;\n        }\n      }\n      valores.push(valorActual.trim());\n      return valores;\n    };\n\n    const header = parseLinea(lineas[0]).map(h => h.toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').replace(/[^a-z0-9]/g, ''));\n    \n    // Buscar columnas 'consecutivo' y 'codigo'\n    let idxConsecutivo = header.findIndex(h => h.includes('consecutivo') || h === 'id' || h === 'item' || h === 'nro' || h === 'num');\n    let idxCodigo = header.findIndex(h => h.includes('codigo') || h.includes('identificacion') || h.includes('documento') || h.includes('cedula') || h === 'doc' || h === 'numero');\n\n    // Si no encuentra por nombre, asumir por defecto: col 0 = consecutivo, col 1 = codigo (o si solo hay 1 col, col 0 = codigo)\n    let tieneHeader = true;\n    if (idxCodigo === -1) {\n      if (header.length === 1) {\n        idxCodigo = 0;\n        idxConsecutivo = -1;\n        // Comprobar si la primera línea ya era un número\n        if (/^\\d+$/.test(header[0])) tieneHeader = false;\n      } else {\n        idxConsecutivo = 0;\n        idxCodigo = 1;\n        if (/^\\d+$/.test(header[0]) || /^\\d+$/.test(header[1])) tieneHeader = false;\n      }\n    }\n\n    const registros = [];\n    const inicioFila = tieneHeader ? 1 : 0;\n\n    for (let i = inicioFila; i < lineas.length; i++) {\n      const cols = parseLinea(lineas[i]);\n      if (cols.length === 0 || cols.every(c => !c)) continue;\n\n      let consecutivo = (idxConsecutivo >= 0 && cols[idxConsecutivo]) ? cols[idxConsecutivo] : String(registros.length + 1);\n      let codigo = (idxCodigo >= 0 && cols[idxCodigo]) ? cols[idxCodigo] : (cols[0] || '');\n\n      // Limpiar caracteres extraños del código (dejar números o letras limpias)\n      codigo = String(codigo).replace(/[\"']/g, '').trim();\n\n      if (codigo) {\n        registros.push({\n          consecutivo: consecutivo,\n          codigo: codigo,\n          filaOriginal: i + 1\n        });\n      }\n    }\n\n    return registros;\n  }\n\n  /**\n   * Genera y descarga el archivo CSV con BOM UTF-8 y delimitador punto y coma\n   */\n  function exportarResultadosCSV() {\n    if (!STATE.resultados || STATE.resultados.length === 0) {\n      alert('Aún no hay resultados para exportar.');\n      return;\n    }\n\n    // Reunir todas las columnas presentes en los resultados\n    const columnasFijas = ['CONSECUTIVO', 'CODIGO_BUSCADO', 'ESTADO_CONSULTA', 'PORTAL_CONSULTADO', 'DETALLE_RESPUESTA', 'FECHA_CONSULTA'];\n    const columnasDinamicasSet = new Set();\n\n    STATE.resultados.forEach(res => {\n      if (res.data) {\n        Object.keys(res.data).forEach(k => columnasDinamicasSet.add(k));\n      }\n    });\n\n    const columnasDinamicas = Array.from(columnasDinamicasSet);\n    const todasLasColumnas = [...columnasFijas, ...columnasDinamicas];\n\n    const escapeCSV = (val) => {\n      if (val === undefined || val === null) return '';\n      const str = String(val).replace(/\\r?\\n/g, ' ').trim();\n      if (str.includes(';') || str.includes('\"') || str.includes(',')) {\n        return `\"${str.replace(/\"/g, '\"\"')}\"`;\n      }\n      return str;\n    };\n\n    const lineas = [];\n    // Encabezado\n    lineas.push(todasLasColumnas.map(escapeCSV).join(';'));\n\n    // Filas\n    STATE.resultados.forEach(res => {\n      const fila = [];\n      fila.push(escapeCSV(res.consecutivo));\n      fila.push(escapeCSV(res.codigo));\n      fila.push(escapeCSV(res.estado));\n      fila.push(escapeCSV(res.portal));\n      fila.push(escapeCSV(res.mensaje));\n      fila.push(escapeCSV(res.fechaHora));\n\n      columnasDinamicas.forEach(col => {\n        fila.push(escapeCSV(res.data ? res.data[col] : ''));\n      });\n\n      lineas.push(fila.join(';'));\n    });\n\n    // Agregar BOM UTF-8 (\\uFEFF) para compatibilidad nativa con Excel en Windows\n    const contenidoCSV = '\\uFEFF' + lineas.join('\\r\\n');\n    const blob = new Blob([contenidoCSV], { type: 'text/csv;charset=utf-8;' });\n    const url = URL.createObjectURL(blob);\n\n    const a = document.createElement('a');\n    const fechaStr = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);\n    a.href = url;\n    a.download = `consulta_${STATE.portal}_${fechaStr}.csv`;\n    document.body.appendChild(a);\n    a.click();\n    document.body.removeChild(a);\n    URL.revokeObjectURL(url);\n\n    agregarLog(`Archivo CSV exportado exitosamente (${STATE.resultados.length} filas procesadas).`, 'info');\n  }\n\n  // ============================================================================\n  // 4. MOTOR DE AUTOMATIZACIÓN DOM E IFRAME\n  // ============================================================================\n\n  /**\n   * Crea o reutiliza el iframe de ejecución bajo el mismo origen\n   */\n  function obtenerIframeWorker() {\n    let iframe = document.getElementById('sisvan-worker-iframe');\n    if (!iframe) {\n      iframe = document.createElement('iframe');\n      iframe.id = 'sisvan-worker-iframe';\n      iframe.name = 'sisvan-worker-iframe';\n      iframe.style.width = '100%';\n      iframe.style.height = '180px';\n      iframe.style.border = '1px solid #cbd5e1';\n      iframe.style.borderRadius = '6px';\n      iframe.style.backgroundColor = '#ffffff';\n\n      const container = document.getElementById('sisvan-iframe-container');\n      if (container) {\n        container.appendChild(iframe);\n      } else {\n        iframe.style.display = 'none';\n        document.body.appendChild(iframe);\n      }\n    }\n    STATE.workerIframe = iframe;\n    return iframe;\n  }\n\n  /**\n   * Espera a que un iframe termine de cargar completamente y el WebForms PageRequestManager termine\n   */\n  function esperarCargaIframe(iframe, timeoutMs = 25000) {\n    return new Promise((resolve, reject) => {\n      let timeoutId;\n      let intervalId;\n\n      const limpiar = () => {\n        clearTimeout(timeoutId);\n        clearInterval(intervalId);\n      };\n\n      timeoutId = setTimeout(() => {\n        limpiar();\n        resolve(); // Continuar incluso si agota tiempo, el selector siguiente validará\n      }, timeoutMs);\n\n      intervalId = setInterval(() => {\n        try {\n          const doc = iframe.contentDocument || (iframe.contentWindow && iframe.contentWindow.document);\n          if (!doc) return;\n\n          const docListo = doc.readyState === 'complete';\n          const win = iframe.contentWindow;\n          let prmListo = true;\n          if (win && win.Sys && win.Sys.WebForms && win.Sys.WebForms.PageRequestManager) {\n            try {\n              prmListo = !win.Sys.WebForms.PageRequestManager.getInstance().get_isInAsyncPostBack();\n            } catch (_e) {\n              prmListo = true;\n            }\n          }\n\n          if (docListo && prmListo) {\n            limpiar();\n            resolve();\n          }\n        } catch (_err) {\n          limpiar();\n          resolve();\n        }\n      }, 100);\n    });\n  }\n\n  /**\n   * Navega el iframe a una URL relativa y espera que esté listo\n   */\n  async function navegarIframe(url) {\n    const iframe = obtenerIframeWorker();\n    const docActual = iframe.contentDocument;\n    if (docActual && docActual.location.pathname === url) {\n      return; // Ya está en la página correcta\n    }\n\n    iframe.src = url;\n    await esperarCargaIframe(iframe);\n    await new Promise(r => setTimeout(r, 400));\n  }\n\n  /**\n   * Espera a que un selector exista en el documento del iframe\n   */\n  function esperarSelector(doc, selector, timeoutMs = 12000) {\n    return new Promise((resolve) => {\n      const inicio = Date.now();\n      const elInmediato = doc.querySelector(selector);\n      if (elInmediato) return resolve(elInmediato);\n\n      const timer = setInterval(() => {\n        const el = doc.querySelector(selector);\n        if (el) {\n          clearInterval(timer);\n          return resolve(el);\n        }\n        if (Date.now() - inicio > timeoutMs) {\n          clearInterval(timer);\n          return resolve(null);\n        }\n      }, 150);\n    });\n  }\n\n  /**\n   * Espera a que un elemento tenga un valor o texto no vacío\n   */\n  function esperarValor(doc, selector, timeoutMs = 12000) {\n    return new Promise((resolve) => {\n      const inicio = Date.now();\n      const timer = setInterval(() => {\n        const el = doc.querySelector(selector);\n        if (el) {\n          const val = el.value !== undefined ? el.value.trim() : (el.innerText || '').trim();\n          if (val.length > 0) {\n            clearInterval(timer);\n            return resolve(val);\n          }\n        }\n        if (Date.now() - inicio > timeoutMs) {\n          clearInterval(timer);\n          return resolve('');\n        }\n      }, 150);\n    });\n  }\n\n  /**\n   * Lee el valor seleccionado de un <select> o input\n   */\n  function leerControl(doc, selector) {\n    if (!doc || !selector) return '';\n    const el = doc.querySelector(selector);\n    if (!el) return '';\n    if (el.tagName.toLowerCase() === 'select') {\n      const selectEl = el;\n      if (selectEl.selectedIndex >= 0 && selectEl.options[selectEl.selectedIndex]) {\n        return selectEl.options[selectEl.selectedIndex].text.trim();\n      }\n      return '';\n    }\n    return (el.value || el.innerText || '').trim();\n  }\n\n  /**\n   * Ejecuta una acción que detona un UpdatePanel / PostBack de ASP.NET y espera su resolución\n   */\n  async function ejecutarAccionYEsperar(iframe, fnAccion, timeoutMs = 15000) {\n    const win = iframe.contentWindow;\n    let prm = null;\n    try {\n      if (win && win.Sys && win.Sys.WebForms && win.Sys.WebForms.PageRequestManager) {\n        prm = win.Sys.WebForms.PageRequestManager.getInstance();\n      }\n    } catch (_e) {}\n\n    fnAccion();\n\n    await new Promise(r => setTimeout(r, 300));\n\n    // Esperar a que el UpdatePanel termine el postback\n    const inicio = Date.now();\n    while (Date.now() - inicio < timeoutMs) {\n      let ocupado = false;\n      try {\n        if (prm && prm.get_isInAsyncPostBack()) {\n          ocupado = true;\n        }\n      } catch (_e) {}\n\n      if (!ocupado) {\n        break;\n      }\n      await new Promise(r => setTimeout(r, 100));\n    }\n    await new Promise(r => setTimeout(r, 200));\n  }\n\n  // ============================================================================\n  // 5. CONSULTA EN PORTAL PAI (MENORES / MAYORES)\n  // ============================================================================\n\n  async function consultarCodigoEnPai(codigo, modo = 'menores') {\n    const iframe = obtenerIframeWorker();\n    const targetUrl = modo === 'menores' ? URLS.paiMenores : URLS.paiMayores;\n\n    await navegarIframe(targetUrl);\n    const doc = iframe.contentDocument;\n\n    // Verificar si la sesión expiró o redirigió a login\n    if (doc.location.href.toLowerCase().includes('login.aspx') || doc.querySelector('#txb_Usuario')) {\n      throw new Error('SESION_REQUERIDA');\n    }\n\n    const inputBusqueda = await esperarSelector(doc, '#ContentPlaceHolder1_txb_NumeroIdentificacionBusqueda', 10000);\n    if (!inputBusqueda) {\n      throw new Error('No se encontró el campo de búsqueda #ContentPlaceHolder1_txb_NumeroIdentificacionBusqueda.');\n    }\n\n    // 1. Limpiar y colocar el código\n    inputBusqueda.value = '';\n    inputBusqueda.focus();\n    inputBusqueda.value = codigo;\n    inputBusqueda.dispatchEvent(new Event('input', { bubbles: true }));\n    inputBusqueda.dispatchEvent(new Event('change', { bubbles: true }));\n\n    // 2. Disparar búsqueda (Enter o botón buscar)\n    await ejecutarAccionYEsperar(iframe, () => {\n      const btnBuscar = doc.querySelector('#ContentPlaceHolder1_btnBuscar, #ContentPlaceHolder1_btn_Buscar, #ContentPlaceHolder1_btnConsultar');\n      if (btnBuscar) {\n        btnBuscar.click();\n      } else {\n        // Simular Enter\n        const enterEv = new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true });\n        inputBusqueda.dispatchEvent(enterEv);\n        // Si WebForms tiene form, submit\n        const form = doc.forms[0];\n        if (form && typeof form.__doPostBack === 'function') {\n          try {\n            form.__doPostBack('ctl00$ContentPlaceHolder1$txb_NumeroIdentificacionBusqueda', '');\n          } catch (_e) {}\n        }\n      }\n    });\n\n    // 3. Esperar enlace de la grilla gdvResultadoBusqueda\n    const linkGrilla = await esperarSelector(doc, 'a[href*=\"gdvResultadoBusqueda\"][href*=\"Select$0\"]', 8000);\n    if (!linkGrilla) {\n      return {\n        encontrado: false,\n        mensaje: 'No registrado en PAIWEB.',\n        data: {}\n      };\n    }\n\n    // 4. Hacer clic en el enlace para abrir el formulario del paciente\n    await ejecutarAccionYEsperar(iframe, () => {\n      linkGrilla.click();\n    });\n\n    // 5. Esperar a que se popule el campo de identificación\n    await esperarValor(doc, '#ContentPlaceHolder1_txb_Identificacion', 10000);\n\n    // 6. Extraer campos\n    const datos = {};\n    const pNom = leerControl(doc, '#ContentPlaceHolder1_txb_Nombre1');\n    const sNom = leerControl(doc, '#ContentPlaceHolder1_txb_Nombre2');\n    const pApe = leerControl(doc, '#ContentPlaceHolder1_txb_Apellido1');\n    const sApe = leerControl(doc, '#ContentPlaceHolder1_txb_Apellido2');\n\n    datos['PAI_PRIMER_NOMBRE'] = pNom;\n    datos['PAI_SEGUNDO_NOMBRE'] = sNom;\n    datos['PAI_PRIMER_APELLIDO'] = pApe;\n    datos['PAI_SEGUNDO_APELLIDO'] = sApe;\n    datos['PAI_NOMBRE_COMPLETO'] = `${pNom} ${sNom} ${pApe} ${sApe}`.replace(/\\s+/g, ' ').trim();\n    datos['PAI_MODO_CONSULTA'] = modo.toUpperCase();\n\n    // Extraer los campos solicitados por los checkboxes del panel\n    for (const campo of CAMPOS_PAI_CATALOGO) {\n      if (STATE.camposSeleccionadosPai.includes(campo.id)) {\n        const val = leerControl(doc, campo.sel);\n        datos[`PAI_${campo.id.toUpperCase()}`] = val;\n      }\n    }\n\n    return {\n      encontrado: true,\n      mensaje: `Verificado en PAIWEB (${modo.toUpperCase()}).`,\n      data: datos\n    };\n  }\n\n  // ============================================================================\n  // 6. CONSULTA EN COMPROBADOR DE DERECHOS (ADRES / BUDA / CONTRIBUTIVO)\n  // ============================================================================\n\n  async function consultarCodigoEnComprobador(codigo) {\n    const iframe = obtenerIframeWorker();\n    await navegarIframe(URLS.comprobador);\n    const doc = iframe.contentDocument;\n\n    const inputNoId = await esperarSelector(doc, '#MainContent_txtNoId', 10000);\n    if (!inputNoId) {\n      throw new Error('No se encontró el campo de documento #MainContent_txtNoId.');\n    }\n\n    inputNoId.value = '';\n    inputNoId.focus();\n    inputNoId.value = codigo;\n    inputNoId.dispatchEvent(new Event('input', { bubbles: true }));\n    inputNoId.dispatchEvent(new Event('change', { bubbles: true }));\n\n    // Disparar consulta\n    await ejecutarAccionYEsperar(iframe, () => {\n      const btnConsultar = doc.querySelector('#MainContent_btnConsultar, #MainContent_cmdConsultar, input[type=\"submit\"]');\n      if (btnConsultar) {\n        btnConsultar.click();\n      } else {\n        const enterEv = new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true });\n        inputNoId.dispatchEvent(enterEv);\n      }\n    });\n\n    // Revisar si fue redirigido a NoAutorizado.aspx\n    if (doc.location.href.toLowerCase().includes('noautorizado.aspx')) {\n      for (let reintento = 0; reintento < 3; reintento++) {\n        const cmdInicio = doc.querySelector('#MainContent_cmdInicio');\n        if (cmdInicio) {\n          await ejecutarAccionYEsperar(iframe, () => cmdInicio.click());\n          await esperarSelector(doc, '#MainContent_txtNoId', 6000);\n          const reInput = doc.querySelector('#MainContent_txtNoId');\n          if (reInput) {\n            reInput.value = codigo;\n            await ejecutarAccionYEsperar(iframe, () => {\n              const b = doc.querySelector('#MainContent_btnConsultar, #MainContent_cmdConsultar, input[type=\"submit\"]');\n              if (b) b.click();\n            });\n          }\n        }\n        if (!doc.location.href.toLowerCase().includes('noautorizado.aspx')) {\n          break;\n        }\n      }\n\n      if (doc.location.href.toLowerCase().includes('noautorizado.aspx')) {\n        return {\n          encontrado: false,\n          mensaje: 'Portal distrital reportó No Autorizado.',\n          data: {}\n        };\n      }\n    }\n\n    // Detectar tabla Contributivo o BUDA\n    const tabla = doc.querySelector('#MainContent_grdContributivo, #MainContent_grdBUDA, #MainContent_grdSubsidiado');\n    if (!tabla) {\n      return {\n        encontrado: false,\n        mensaje: 'No encontrado en Comprobador de Derechos.',\n        data: {}\n      };\n    }\n\n    const esContributivo = !!doc.querySelector('#MainContent_grdContributivo');\n    const tablaOrigen = esContributivo ? 'Contributivo' : 'BUDA';\n\n    // Parsear tabla HTML\n    const headers = Array.from(tabla.querySelectorAll('th')).map(th => (th.textContent || '').trim());\n    const filas = Array.from(tabla.querySelectorAll('tr'));\n    const filaDatos = filas.find(r => r.querySelector('td'));\n\n    const datosExtraidos = {};\n    if (STATE.camposComprobador.tabla_origen) {\n      datosExtraidos['ADRES_TABLA_ORIGEN'] = tablaOrigen;\n    }\n\n    if (filaDatos) {\n      const celdas = Array.from(filaDatos.querySelectorAll('td')).map(td => (td.textContent || '').trim());\n      headers.forEach((h, i) => {\n        if (h && celdas[i] !== undefined) {\n          const colKey = `ADRES_${h.toUpperCase().replace(/\\s+/g, '_').replace(/[^A-Z0-9_]/g, '')}`;\n          datosExtraidos[colKey] = celdas[i];\n        }\n      });\n    }\n\n    // Si se solicitó Sexo en Detalle\n    if (STATE.camposComprobador.sexo_detalle) {\n      try {\n        const linkDetalle = tabla.querySelector('a[href*=\"Select$0\"]');\n        if (linkDetalle) {\n          await ejecutarAccionYEsperar(iframe, () => linkDetalle.click());\n          const lblSexo = doc.querySelector('#MainContent_lblSexo');\n          if (lblSexo) {\n            datosExtraidos['ADRES_SEXO'] = (lblSexo.textContent || lblSexo.innerText || '').trim();\n          }\n        }\n      } catch (_e) {}\n    }\n\n    // Botón volver a nueva consulta\n    try {\n      const btnNueva = doc.querySelector('#MainContent_cmdNuevaConsulta, #MainContent_cmdNueConsulta, #MainContent_cmdInicio');\n      if (btnNueva) {\n        await ejecutarAccionYEsperar(iframe, () => btnNueva.click());\n      }\n    } catch (_e) {}\n\n    return {\n      encontrado: true,\n      mensaje: `Verificado en ${tablaOrigen}.`,\n      data: datosExtraidos\n    };\n  }\n\n  // ============================================================================\n  // 7. ORQUESTADOR DE CONSULTA MASIVA\n  // ============================================================================\n\n  async function iniciarProcesamiento() {\n    if (STATE.registros.length === 0) {\n      alert('Por favor carga un archivo CSV con columnas \"consecutivo\" y \"codigo\" antes de iniciar.');\n      return;\n    }\n\n    if (STATE.ejecutando) return;\n\n    STATE.ejecutando = true;\n    STATE.detenerSolicitado = false;\n    STATE.resultados = [];\n    STATE.indiceActual = 0;\n    STATE.stats = { total: STATE.registros.length, exitosos: 0, noEncontrados: 0, errores: 0 };\n    STATE.startTime = Date.now();\n\n    actualizarBotonesUI(true);\n    iniciarCronometro();\n    agregarLog(`Iniciando lote de ${STATE.registros.length} registros en modo \"${STATE.portal}\"...`, 'info');\n\n    // Comprobar dominio y alertar si es necesario\n    if (!ES_ORIGEN_OFICIAL) {\n      agregarLog(`⚠️ Aviso: Estás ejecutando en \"${window.location.hostname}\". Para conectar con el portal real de Secretaría de Salud debes estar en appb.saludcapital.gov.co.`, 'warn');\n    }\n\n    for (let i = 0; i < STATE.registros.length; i++) {\n      if (STATE.detenerSolicitado) {\n        agregarLog(`Proceso detenido por el usuario en el registro ${i} de ${STATE.registros.length}.`, 'warn');\n        break;\n      }\n\n      STATE.indiceActual = i + 1;\n      const item = STATE.registros[i];\n      actualizarProgresoUI();\n\n      try {\n        let res;\n\n        if (STATE.portal === 'pai_menores') {\n          res = await consultarCodigoEnPai(item.codigo, 'menores');\n        } else if (STATE.portal === 'pai_mayores') {\n          res = await consultarCodigoEnPai(item.codigo, 'mayores');\n        } else if (STATE.portal === 'pai_auto') {\n          // Primero prueba Menores\n          res = await consultarCodigoEnPai(item.codigo, 'menores');\n          if (!res.encontrado) {\n            // Reintenta en Mayores\n            res = await consultarCodigoEnPai(item.codigo, 'mayores');\n          }\n        } else if (STATE.portal === 'comprobador') {\n          res = await consultarCodigoEnComprobador(item.codigo);\n        }\n\n        const registroResultado = {\n          consecutivo: item.consecutivo,\n          codigo: item.codigo,\n          estado: res.encontrado ? 'ENCONTRADO' : 'NO ENCONTRADO',\n          portal: STATE.portal.toUpperCase(),\n          mensaje: res.mensaje,\n          fechaHora: new Date().toLocaleString(),\n          data: res.data || {}\n        };\n\n        STATE.resultados.push(registroResultado);\n\n        if (res.encontrado) {\n          STATE.stats.exitosos++;\n          agregarLog(`[${i + 1}/${STATE.registros.length}] Registro procesado exitosamente: ${res.mensaje}`, 'success');\n        } else {\n          STATE.stats.noEncontrados++;\n          agregarLog(`[${i + 1}/${STATE.registros.length}] ${res.mensaje}`, 'warn');\n        }\n      } catch (err) {\n        if (err.message === 'SESION_REQUERIDA') {\n          STATE.stats.errores++;\n          agregarLog(`🚨 ERROR DE SESIÓN: El portal PAI requiere iniciar sesión. Por favor inicia sesión manualmente en la pestaña y pulsa Iniciar nuevamente.`, 'error');\n          break;\n        }\n\n        STATE.stats.errores++;\n        STATE.resultados.push({\n          consecutivo: item.consecutivo,\n          codigo: item.codigo,\n          estado: 'ERROR',\n          portal: STATE.portal.toUpperCase(),\n          mensaje: err.message || 'Error desconocido en la consulta',\n          fechaHora: new Date().toLocaleString(),\n          data: {}\n        });\n        agregarLog(`[${i + 1}/${STATE.registros.length}] Error en consulta: ${err.message}`, 'error');\n      }\n\n      // Pausa configurable entre consultas para no sobrecargar el servidor institucional\n      if (STATE.retardoMs > 0 && i < STATE.registros.length - 1) {\n        await new Promise(r => setTimeout(r, STATE.retardoMs));\n      }\n    }\n\n    finalizarProcesamiento();\n  }\n\n  function detenerProcesamiento() {\n    if (!STATE.ejecutando) return;\n    STATE.detenerSolicitado = true;\n    agregarLog('Solicitud de detención recibida. Finalizando consulta en curso...', 'warn');\n  }\n\n  function finalizarProcesamiento() {\n    STATE.ejecutando = false;\n    detenerCronometro();\n    actualizarBotonesUI(false);\n    actualizarProgresoUI();\n\n    const duracionSeg = Math.round((Date.now() - STATE.startTime) / 1000);\n    agregarLog(`🏁 Lote finalizado en ${duracionSeg}s. Total: ${STATE.stats.total} | Exitosos: ${STATE.stats.exitosos} | No Encontrados: ${STATE.stats.noEncontrados} | Errores: ${STATE.stats.errores}`, 'info');\n\n    // Habilitar botón de descarga\n    const btnDescargar = document.getElementById('sisvan-btn-descargar');\n    if (btnDescargar && STATE.resultados.length > 0) {\n      btnDescargar.style.opacity = '1';\n      btnDescargar.style.pointerEvents = 'auto';\n    }\n  }\n\n  // ============================================================================\n  // 8. CRONÓMETRO Y ESTADÍSTICAS EN TIEMPO REAL\n  // ============================================================================\n\n  function iniciarCronometro() {\n    detenerCronometro();\n    STATE.timerInterval = setInterval(() => {\n      const transcurridoMs = Date.now() - STATE.startTime;\n      const segTotales = Math.floor(transcurridoMs / 1000);\n      const min = Math.floor(segTotales / 60);\n      const seg = segTotales % 60;\n      const tiempoStr = `${String(min).padStart(2, '0')}:${String(seg).padStart(2, '0')}`;\n\n      const elTimer = document.getElementById('sisvan-timer');\n      if (elTimer) elTimer.textContent = tiempoStr;\n\n      // Calcular velocidad (registros por minuto) y tiempo estimado restante\n      if (STATE.indiceActual > 0 && segTotales > 2) {\n        const regsPorMin = Math.round((STATE.indiceActual / segTotales) * 60);\n        const restantes = STATE.registros.length - STATE.indiceActual;\n        const segRestantes = Math.round(restantes / (STATE.indiceActual / segTotales));\n        const minRest = Math.floor(segRestantes / 60);\n        const segRest = segRestantes % 60;\n        const estStr = `~${minRest}m ${segRest}s rest. (${regsPorMin} reg/min)`;\n\n        const elVel = document.getElementById('sisvan-velocidad');\n        if (elVel) elVel.textContent = estStr;\n      }\n    }, 500);\n  }\n\n  function detenerCronometro() {\n    if (STATE.timerInterval) {\n      clearInterval(STATE.timerInterval);\n      STATE.timerInterval = null;\n    }\n  }\n\n  // ============================================================================\n  // 9. FUNCIÓN DE DIAGNÓSTICO DEL ENTORNO\n  // ============================================================================\n\n  async function ejecutarDiagnostico() {\n    agregarLog('==================================================', 'info');\n    agregarLog('INICIANDO DIAGNÓSTICO TÉCNICO DE CONECTIVIDAD...', 'info');\n    agregarLog('==================================================', 'info');\n\n    const diag = {\n      timestamp: new Date().toISOString(),\n      urlActual: window.location.href,\n      hostname: window.location.hostname,\n      esDominioOficial: ES_ORIGEN_OFICIAL,\n      cookiesHabilitadas: navigator.cookieEnabled,\n      userAgent: navigator.userAgent\n    };\n\n    agregarLog(`• Host actual: ${diag.hostname} (${diag.esDominioOficial ? 'CORRECTO: saludcapital.gov.co' : 'ADVERTENCIA: No es el portal de Salud Capital'})`, diag.esDominioOficial ? 'success' : 'warn');\n\n    // Probar iframe\n    try {\n      const iframe = obtenerIframeWorker();\n      diag.iframeCreado = !!iframe;\n      agregarLog(`• Creación de iframe worker: OK`, 'success');\n    } catch (e) {\n      diag.iframeCreado = false;\n      diag.iframeError = e.message;\n      agregarLog(`• Creación de iframe worker: ERROR (${e.message})`, 'error');\n    }\n\n    // Probar alcance de rutas si estamos en el mismo origen\n    if (ES_ORIGEN_OFICIAL) {\n      // 1. Probar Comprobador\n      try {\n        const respComprobador = await fetch(URLS.comprobador, { method: 'HEAD', credentials: 'same-origin' });\n        diag.comprobadorStatus = respComprobador.status;\n        agregarLog(`• Ruta Comprobador (${URLS.comprobador}): HTTP ${respComprobador.status}`, respComprobador.ok ? 'success' : 'warn');\n      } catch (e) {\n        diag.comprobadorError = e.message;\n        agregarLog(`• Ruta Comprobador: Error de red (${e.message})`, 'error');\n      }\n\n      // 2. Probar PAI Datos Básicos\n      try {\n        const respPai = await fetch(URLS.paiMenores, { method: 'HEAD', credentials: 'same-origin' });\n        diag.paiStatus = respPai.status;\n        agregarLog(`• Ruta PAI Menores (${URLS.paiMenores}): HTTP ${respPai.status}`, respPai.ok ? 'success' : 'warn');\n      } catch (e) {\n        diag.paiError = e.message;\n        agregarLog(`• Ruta PAI: Error de red (${e.message})`, 'error');\n      }\n    } else {\n      agregarLog(`• Aviso: Para diagnósticos de red completos, ejecuta este script en una pestaña con la URL https://${HOST_ESPERADO}`, 'warn');\n    }\n\n    agregarLog('DIAGNÓSTICO COMPLETADO CON ÉXITO.', 'success');\n    return diag;\n  }\n\n  // Exponer la función en window para que el usuario pueda escribir diagnostico() en la consola\n  window.diagnostico = ejecutarDiagnostico;\n  window.SISVAN_PAI_CONSOLE = {\n    version: '2.5.0',\n    state: STATE,\n    diagnostico: ejecutarDiagnostico,\n    iniciar: iniciarProcesamiento,\n    detener: detenerProcesamiento,\n    exportarCSV: exportarResultadosCSV\n  };\n\n  // ============================================================================\n  // 10. CONSTRUCCIÓN DE LA INTERFAZ FLOTANTE (PANEL FLOTANTE)\n  // ============================================================================\n\n  function crearPanelFlotante() {\n    const root = document.createElement('div');\n    root.id = 'sisvan-console-root';\n    root.style.cssText = `\n      position: fixed;\n      top: 16px;\n      right: 16px;\n      width: 440px;\n      max-width: calc(100vw - 32px);\n      max-height: calc(100vh - 32px);\n      background: #0f172a;\n      color: #f8fafc;\n      font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif;\n      font-size: 13px;\n      border-radius: 14px;\n      box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1);\n      z-index: 9999999;\n      display: flex;\n      flex-direction: column;\n      overflow: hidden;\n      transition: height 0.2s ease, width 0.2s ease;\n    `;\n\n    root.innerHTML = `\n      <!-- ENCABEZADO DRAGGABLE -->\n      <div id=\"sisvan-drag-header\" style=\"\n        background: linear-gradient(135deg, #1e293b, #0f172a);\n        padding: 12px 14px;\n        border-bottom: 1px solid #334155;\n        display: flex;\n        align-items: center;\n        justify-content: space-between;\n        cursor: move;\n        user-select: none;\n      \">\n        <div style=\"display: flex; align-items: center; gap: 8px;\">\n          <div style=\"width: 10px; height: 10px; border-radius: 50%; background: #10b981; box-shadow: 0 0 8px #10b981;\"></div>\n          <span style=\"font-weight: 700; font-size: 13px; letter-spacing: 0.3px;\">SISVAN · Consulta Consola</span>\n          <span style=\"font-size: 10px; background: #3b82f6; color: #fff; padding: 1px 6px; border-radius: 10px; font-weight: 600;\">v2.5</span>\n        </div>\n        <div style=\"display: flex; gap: 6px;\">\n          <button id=\"sisvan-btn-min\" title=\"Minimizar / Restaurar\" style=\"background: transparent; border: none; color: #94a3b8; cursor: pointer; font-size: 14px; padding: 2px 6px; border-radius: 4px;\">_</button>\n          <button id=\"sisvan-btn-cerrar\" title=\"Cerrar panel\" style=\"background: transparent; border: none; color: #ef4444; cursor: pointer; font-size: 14px; padding: 2px 6px; border-radius: 4px;\">✕</button>\n        </div>\n      </div>\n\n      <!-- CUERPO PRINCIPAL DEL PANEL -->\n      <div id=\"sisvan-panel-body\" style=\"padding: 12px 14px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 12px;\">\n\n        <!-- ALERTA DE DOMINIO SI NO ESTÁ EN SALUDCAPITAL -->\n        ${!ES_ORIGEN_OFICIAL ? `\n          <div style=\"background: #451a03; border: 1px solid #b45309; color: #fde68a; padding: 8px 10px; border-radius: 8px; font-size: 11px;\">\n            ⚠️ <b>Aviso de Dominio:</b> Estás en <i>${window.location.hostname}</i>. Para consultar los datos reales de la Secretaría de Salud de Bogotá, pega este script en <b>https://appb.saludcapital.gov.co</b>.\n          </div>\n        ` : `\n          <div style=\"background: #064e3b; border: 1px solid #059669; color: #a7f3d0; padding: 6px 10px; border-radius: 8px; font-size: 11px; display: flex; align-items: center; justify-content: space-between;\">\n            <span>🛡️ <b>Conectado al origen oficial:</b> appb.saludcapital.gov.co</span>\n          </div>\n        `}\n\n        <!-- SELECCIÓN DE ARCHIVO CSV -->\n        <div>\n          <label style=\"font-weight: 600; font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;\">1. Archivo CSV con Códigos</label>\n          <div id=\"sisvan-dropzone\" style=\"\n            border: 2px dashed #475569;\n            border-radius: 8px;\n            padding: 12px;\n            text-align: center;\n            background: #1e293b;\n            cursor: pointer;\n            transition: all 0.2s ease;\n          \">\n            <input type=\"file\" id=\"sisvan-file-input\" accept=\".csv,.txt\" style=\"display: none;\" />\n            <div id=\"sisvan-dropzone-text\" style=\"font-size: 12px; color: #cbd5e1;\">\n              📄 <b style=\"color: #38bdf8;\">Haz clic para seleccionar CSV</b> o arrástralo aquí\n            </div>\n            <div style=\"font-size: 10px; color: #64748b; margin-top: 4px;\">\n              Columnas requeridas: <code>consecutivo</code> y <code>codigo</code> (sep: <b>;</b> o <b>,</b>)\n            </div>\n          </div>\n          <div id=\"sisvan-csv-info\" style=\"font-size: 11px; color: #10b981; margin-top: 4px; display: none; font-weight: 500;\"></div>\n        </div>\n\n        <!-- SELECTOR DE PORTAL -->\n        <div>\n          <label style=\"font-weight: 600; font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;\">2. Portal de Consulta</label>\n          <div style=\"display: grid; grid-template-columns: 1fr 1fr; gap: 6px;\">\n            <label style=\"display: flex; align-items: center; gap: 6px; background: #1e293b; padding: 7px 10px; border-radius: 6px; cursor: pointer; border: 1px solid #334155; font-size: 12px;\">\n              <input type=\"radio\" name=\"sisvan-portal\" value=\"pai_menores\" checked />\n              <span>PAI Menores (pag=2)</span>\n            </label>\n            <label style=\"display: flex; align-items: center; gap: 6px; background: #1e293b; padding: 7px 10px; border-radius: 6px; cursor: pointer; border: 1px solid #334155; font-size: 12px;\">\n              <input type=\"radio\" name=\"sisvan-portal\" value=\"pai_mayores\" />\n              <span>PAI Mayores (pag=3)</span>\n            </label>\n            <label style=\"display: flex; align-items: center; gap: 6px; background: #1e293b; padding: 7px 10px; border-radius: 6px; cursor: pointer; border: 1px solid #334155; font-size: 12px;\">\n              <input type=\"radio\" name=\"sisvan-portal\" value=\"pai_auto\" />\n              <span>PAI Auto (2 → 3)</span>\n            </label>\n            <label style=\"display: flex; align-items: center; gap: 6px; background: #1e293b; padding: 7px 10px; border-radius: 6px; cursor: pointer; border: 1px solid #334155; font-size: 12px;\">\n              <input type=\"radio\" name=\"sisvan-portal\" value=\"comprobador\" />\n              <span>Comprobador (ADRES)</span>\n            </label>\n          </div>\n        </div>\n\n        <!-- SELECTOR DE CAMPOS (COLLAPSIBLE) -->\n        <div style=\"background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 8px 10px;\">\n          <div id=\"sisvan-toggle-campos\" style=\"display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none;\">\n            <span style=\"font-weight: 600; font-size: 11px; color: #94a3b8; text-transform: uppercase;\">3. Campos a Extraer</span>\n            <span id=\"sisvan-campos-indicator\" style=\"font-size: 10px; color: #38bdf8;\">Configurar ▾</span>\n          </div>\n\n          <div id=\"sisvan-campos-wrapper\" style=\"display: none; margin-top: 8px; border-top: 1px solid #334155; padding-top: 8px; max-height: 140px; overflow-y: auto;\">\n            <!-- Contenido dinámico según portal -->\n            <div id=\"sisvan-campos-checkboxes\" style=\"display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 11px;\"></div>\n          </div>\n        </div>\n\n        <!-- VELOCIDAD / PAUSA ENTRE CONSULTAS -->\n        <div style=\"display: flex; align-items: center; justify-content: space-between; background: #1e293b; padding: 6px 10px; border-radius: 8px; border: 1px solid #334155;\">\n          <span style=\"font-size: 11px; color: #94a3b8;\">Pausa entre consultas:</span>\n          <select id=\"sisvan-select-retardo\" style=\"background: #0f172a; color: #f8fafc; border: 1px solid #475569; border-radius: 4px; padding: 2px 6px; font-size: 11px;\">\n            <option value=\"200\">200 ms (Rápido)</option>\n            <option value=\"500\" selected>500 ms (Recomendado)</option>\n            <option value=\"1000\">1.0 s (Seguro)</option>\n            <option value=\"2000\">2.0 s (Lento)</option>\n          </select>\n        </div>\n\n        <!-- BOTONES DE ACCIÓN PRINCIPALES -->\n        <div style=\"display: grid; grid-template-columns: 1.2fr 1fr 0.8fr; gap: 6px;\">\n          <button id=\"sisvan-btn-iniciar\" style=\"\n            background: #10b981;\n            color: #ffffff;\n            border: none;\n            padding: 8px 12px;\n            border-radius: 8px;\n            font-weight: 700;\n            font-size: 12px;\n            cursor: pointer;\n            transition: all 0.2s;\n            display: flex;\n            align-items: center;\n            justify-content: center;\n            gap: 4px;\n          \">\n            ▶ Iniciar\n          </button>\n\n          <button id=\"sisvan-btn-detener\" disabled style=\"\n            background: #ef4444;\n            color: #ffffff;\n            border: none;\n            padding: 8px 12px;\n            border-radius: 8px;\n            font-weight: 700;\n            font-size: 12px;\n            cursor: pointer;\n            opacity: 0.5;\n            transition: all 0.2s;\n            display: flex;\n            align-items: center;\n            justify-content: center;\n            gap: 4px;\n          \">\n            ⏹ Detener\n          </button>\n\n          <button id=\"sisvan-btn-diag\" style=\"\n            background: #475569;\n            color: #ffffff;\n            border: none;\n            padding: 8px 10px;\n            border-radius: 8px;\n            font-weight: 600;\n            font-size: 12px;\n            cursor: pointer;\n            transition: all 0.2s;\n            display: flex;\n            align-items: center;\n            justify-content: center;\n            gap: 4px;\n          \" title=\"Ejecutar diagnóstico técnico\">\n            🔍 Diag\n          </button>\n        </div>\n\n        <!-- BARRA DE PROGRESO Y CRONÓMETRO -->\n        <div style=\"background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 8px 10px;\">\n          <div style=\"display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px;\">\n            <span id=\"sisvan-progreso-label\" style=\"font-weight: 600; color: #cbd5e1;\">Progreso: 0 / 0</span>\n            <span id=\"sisvan-timer\" style=\"font-family: monospace; font-weight: 700; color: #38bdf8;\">00:00</span>\n          </div>\n          <div style=\"background: #0f172a; height: 8px; border-radius: 4px; overflow: hidden;\">\n            <div id=\"sisvan-progreso-bar\" style=\"background: linear-gradient(90deg, #3b82f6, #10b981); height: 100%; width: 0%; transition: width 0.2s ease;\"></div>\n          </div>\n          <div style=\"display: flex; justify-content: space-between; font-size: 10px; color: #94a3b8; margin-top: 4px;\">\n            <span id=\"sisvan-velocidad\">Listo para iniciar</span>\n            <span id=\"sisvan-porcentaje\">0%</span>\n          </div>\n        </div>\n\n        <!-- CONTADORES DE ESTADO -->\n        <div style=\"display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; text-align: center;\">\n          <div style=\"background: #1e293b; padding: 6px; border-radius: 6px; border: 1px solid #334155;\">\n            <div style=\"font-size: 10px; color: #94a3b8;\">Total</div>\n            <div id=\"sisvan-stat-total\" style=\"font-size: 14px; font-weight: 700; color: #f8fafc;\">0</div>\n          </div>\n          <div style=\"background: #1e293b; padding: 6px; border-radius: 6px; border: 1px solid #334155;\">\n            <div style=\"font-size: 10px; color: #10b981;\">Éxito</div>\n            <div id=\"sisvan-stat-exitos\" style=\"font-size: 14px; font-weight: 700; color: #10b981;\">0</div>\n          </div>\n          <div style=\"background: #1e293b; padding: 6px; border-radius: 6px; border: 1px solid #334155;\">\n            <div style=\"font-size: 10px; color: #f59e0b;\">No Encontrado</div>\n            <div id=\"sisvan-stat-noenc\" style=\"font-size: 14px; font-weight: 700; color: #f59e0b;\">0</div>\n          </div>\n          <div style=\"background: #1e293b; padding: 6px; border-radius: 6px; border: 1px solid #334155;\">\n            <div style=\"font-size: 10px; color: #ef4444;\">Error</div>\n            <div id=\"sisvan-stat-err\" style=\"font-size: 14px; font-weight: 700; color: #ef4444;\">0</div>\n          </div>\n        </div>\n\n        <!-- REGISTRO DE ACTIVIDAD (LOG VISUAL) -->\n        <div>\n          <div style=\"display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;\">\n            <span style=\"font-weight: 600; font-size: 11px; color: #94a3b8; text-transform: uppercase;\">Registro de Actividad</span>\n            <button id=\"sisvan-btn-limpiar-log\" style=\"background: transparent; border: none; color: #64748b; font-size: 10px; cursor: pointer;\">Limpiar</button>\n          </div>\n          <div id=\"sisvan-log-container\" style=\"\n            background: #090d16;\n            border: 1px solid #1e293b;\n            border-radius: 6px;\n            padding: 6px 8px;\n            height: 90px;\n            overflow-y: auto;\n            font-family: monospace;\n            font-size: 10.5px;\n            display: flex;\n            flex-direction: column;\n            gap: 2px;\n          \">\n            <div style=\"color: #64748b;\">[${new Date().toLocaleTimeString()}] Panel SISVAN cargado. Selecciona un archivo CSV para empezar.</div>\n          </div>\n        </div>\n\n        <!-- BOTÓN DESCARGAR RESULTADOS -->\n        <button id=\"sisvan-btn-descargar\" style=\"\n          background: #3b82f6;\n          color: #ffffff;\n          border: none;\n          padding: 8px 12px;\n          border-radius: 8px;\n          font-weight: 700;\n          font-size: 12px;\n          cursor: pointer;\n          transition: all 0.2s;\n          display: flex;\n          align-items: center;\n          justify-content: center;\n          gap: 6px;\n          opacity: 0.5;\n          pointer-events: none;\n        \">\n          📥 Descargar CSV de Resultados\n        </button>\n\n        <!-- CONTENEDOR COLLAPSIBLE DE IFRAME EN VIVO (OPCIONAL) -->\n        <div>\n          <button id=\"sisvan-toggle-live-iframe\" style=\"background: transparent; border: none; color: #64748b; font-size: 10px; cursor: pointer; text-decoration: underline; width: 100%; text-align: right;\">\n            👁️ Ver portal en vivo (inspección)\n          </button>\n          <div id=\"sisvan-iframe-container\" style=\"display: none; margin-top: 6px;\"></div>\n        </div>\n\n      </div>\n    `;\n\n    document.body.appendChild(root);\n    enlazarEventosPanel(root);\n    renderizarCheckboxesCampos();\n  }\n\n  // ============================================================================\n  // 11. GESTIÓN DE EVENTOS DE LA INTERFAZ\n  // ============================================================================\n\n  function agregarLog(mensaje, tipo = 'info') {\n    const container = document.getElementById('sisvan-log-container');\n    if (!container) return;\n\n    const linea = document.createElement('div');\n    const hora = new Date().toLocaleTimeString();\n\n    let color = '#94a3b8';\n    if (tipo === 'success') color = '#34d399';\n    else if (tipo === 'warn') color = '#fbbf24';\n    else if (tipo === 'error') color = '#f87171';\n\n    linea.style.color = color;\n    linea.textContent = `[${hora}] ${mensaje}`;\n    container.appendChild(linea);\n    container.scrollTop = container.scrollHeight;\n\n    // Solo loguear métricas no sensibles en console.log (nunca documentos ni nombres)\n    if (mensaje.includes('Registro') || mensaje.includes('Lote') || mensaje.includes('DIAGNÓSTICO')) {\n      console.log(`%c[SISVAN] ${mensaje}`, `color: ${color}`);\n    }\n  }\n\n  function renderizarCheckboxesCampos() {\n    const container = document.getElementById('sisvan-campos-checkboxes');\n    if (!container) return;\n    container.innerHTML = '';\n\n    if (STATE.portal === 'comprobador') {\n      CAMPOS_COMPROBADOR_DEFAULT.forEach(c => {\n        const lbl = document.createElement('label');\n        lbl.style.cssText = 'display: flex; align-items: center; gap: 4px; cursor: pointer; color: #cbd5e1;';\n        lbl.innerHTML = `\n          <input type=\"checkbox\" data-campo=\"${c.id}\" ${STATE.camposComprobador[c.id] ? 'checked' : ''} />\n          <span>${c.label}</span>\n        `;\n        lbl.querySelector('input').addEventListener('change', (e) => {\n          STATE.camposComprobador[c.id] = e.target.checked;\n        });\n        container.appendChild(lbl);\n      });\n    } else {\n      CAMPOS_PAI_CATALOGO.forEach(c => {\n        const lbl = document.createElement('label');\n        lbl.style.cssText = 'display: flex; align-items: center; gap: 4px; cursor: pointer; color: #cbd5e1;';\n        const isChecked = c.fijo || STATE.camposSeleccionadosPai.includes(c.id);\n        lbl.innerHTML = `\n          <input type=\"checkbox\" data-campo=\"${c.id}\" ${isChecked ? 'checked' : ''} ${c.fijo ? 'disabled' : ''} />\n          <span>${c.label}</span>\n        `;\n        if (!c.fijo) {\n          lbl.querySelector('input').addEventListener('change', (e) => {\n            if (e.target.checked) {\n              if (!STATE.camposSeleccionadosPai.includes(c.id)) STATE.camposSeleccionadosPai.push(c.id);\n            } else {\n              STATE.camposSeleccionadosPai = STATE.camposSeleccionadosPai.filter(id => id !== c.id);\n            }\n          });\n        }\n        container.appendChild(lbl);\n      });\n    }\n  }\n\n  function enlazarEventosPanel(root) {\n    // 1. Arrastrar panel\n    const header = document.getElementById('sisvan-drag-header');\n    let isDragging = false;\n    let startX, startY, startLeft, startTop;\n\n    header.addEventListener('mousedown', (e) => {\n      if (e.target.tagName === 'BUTTON') return;\n      isDragging = true;\n      startX = e.clientX;\n      startY = e.clientY;\n      const rect = root.getBoundingClientRect();\n      startLeft = rect.left;\n      startTop = rect.top;\n      document.body.style.userSelect = 'none';\n    });\n\n    window.addEventListener('mousemove', (e) => {\n      if (!isDragging) return;\n      const deltaX = e.clientX - startX;\n      const deltaY = e.clientY - startY;\n      root.style.left = `${Math.max(10, Math.min(window.innerWidth - 450, startLeft + deltaX))}px`;\n      root.style.top = `${Math.max(10, Math.min(window.innerHeight - 100, startTop + deltaY))}px`;\n      root.style.right = 'auto';\n    });\n\n    window.addEventListener('mouseup', () => {\n      isDragging = false;\n      document.body.style.userSelect = '';\n    });\n\n    // 2. Minimizar / Cerrar\n    let minimizado = false;\n    document.getElementById('sisvan-btn-min').addEventListener('click', () => {\n      minimizado = !minimizado;\n      const body = document.getElementById('sisvan-panel-body');\n      body.style.display = minimizado ? 'none' : 'flex';\n      root.style.width = minimizado ? '280px' : '440px';\n    });\n\n    document.getElementById('sisvan-btn-cerrar').addEventListener('click', () => {\n      if (confirm('¿Deseas cerrar el panel SISVAN de la consola?')) {\n        detenerProcesamiento();\n        root.remove();\n      }\n    });\n\n    // 3. Dropzone & File Input\n    const dropzone = document.getElementById('sisvan-dropzone');\n    const fileInput = document.getElementById('sisvan-file-input');\n    const csvInfo = document.getElementById('sisvan-csv-info');\n\n    dropzone.addEventListener('click', () => fileInput.click());\n\n    dropzone.addEventListener('dragover', (e) => {\n      e.preventDefault();\n      dropzone.style.borderColor = '#38bdf8';\n      dropzone.style.background = '#0f172a';\n    });\n\n    dropzone.addEventListener('dragleave', () => {\n      dropzone.style.borderColor = '#475569';\n      dropzone.style.background = '#1e293b';\n    });\n\n    dropzone.addEventListener('drop', (e) => {\n      e.preventDefault();\n      dropzone.style.borderColor = '#475569';\n      dropzone.style.background = '#1e293b';\n      if (e.dataTransfer.files && e.dataTransfer.files[0]) {\n        cargarArchivoCSV(e.dataTransfer.files[0]);\n      }\n    });\n\n    fileInput.addEventListener('change', (e) => {\n      if (e.target.files && e.target.files[0]) {\n        cargarArchivoCSV(e.target.files[0]);\n      }\n    });\n\n    function cargarArchivoCSV(file) {\n      const reader = new FileReader();\n      reader.onload = (evt) => {\n        try {\n          const registros = parsearCSV(evt.target.result);\n          if (registros.length === 0) {\n            alert('No se encontraron registros válidos en el CSV. Asegúrate de incluir columnas \"consecutivo\" y \"codigo\".');\n            return;\n          }\n          STATE.registros = registros;\n          STATE.stats.total = registros.length;\n          document.getElementById('sisvan-stat-total').textContent = registros.length;\n          document.getElementById('sisvan-progreso-label').textContent = `Progreso: 0 / ${registros.length}`;\n          csvInfo.style.display = 'block';\n          csvInfo.textContent = `✓ ${registros.length} registros cargados desde \"${file.name}\".`;\n          agregarLog(`Archivo cargado: \"${file.name}\" con ${registros.length} registros listos.`, 'success');\n        } catch (err) {\n          alert('Error al leer el archivo CSV: ' + err.message);\n        }\n      };\n      reader.readAsText(file);\n    }\n\n    // 4. Selector de Portal\n    root.querySelectorAll('input[name=\"sisvan-portal\"]').forEach(radio => {\n      radio.addEventListener('change', (e) => {\n        STATE.portal = e.target.value;\n        agregarLog(`Portal cambiado a: ${STATE.portal.toUpperCase()}`, 'info');\n        renderizarCheckboxesCampos();\n      });\n    });\n\n    // 5. Acordeón de Campos\n    const toggleCampos = document.getElementById('sisvan-toggle-campos');\n    const wrapperCampos = document.getElementById('sisvan-campos-wrapper');\n    const indCampos = document.getElementById('sisvan-campos-indicator');\n    let camposAbierto = false;\n    toggleCampos.addEventListener('click', () => {\n      camposAbierto = !camposAbierto;\n      wrapperCampos.style.display = camposAbierto ? 'block' : 'none';\n      indCampos.textContent = camposAbierto ? 'Ocultar ▴' : 'Configurar ▾';\n    });\n\n    // 6. Retardo\n    document.getElementById('sisvan-select-retardo').addEventListener('change', (e) => {\n      STATE.retardoMs = parseInt(e.target.value, 10) || 500;\n    });\n\n    // 7. Botones de acción\n    document.getElementById('sisvan-btn-iniciar').addEventListener('click', iniciarProcesamiento);\n    document.getElementById('sisvan-btn-detener').addEventListener('click', detenerProcesamiento);\n    document.getElementById('sisvan-btn-diag').addEventListener('click', ejecutarDiagnostico);\n    document.getElementById('sisvan-btn-descargar').addEventListener('click', exportarResultadosCSV);\n    document.getElementById('sisvan-btn-limpiar-log').addEventListener('click', () => {\n      const container = document.getElementById('sisvan-log-container');\n      if (container) container.innerHTML = '';\n    });\n\n    // 8. Toggle iframe en vivo\n    let iframeVisible = false;\n    document.getElementById('sisvan-toggle-live-iframe').addEventListener('click', () => {\n      iframeVisible = !iframeVisible;\n      const cont = document.getElementById('sisvan-iframe-container');\n      cont.style.display = iframeVisible ? 'block' : 'none';\n      if (iframeVisible) {\n        obtenerIframeWorker();\n      }\n    });\n  }\n\n  function actualizarBotonesUI(enEjecucion) {\n    const btnIniciar = document.getElementById('sisvan-btn-iniciar');\n    const btnDetener = document.getElementById('sisvan-btn-detener');\n    if (btnIniciar) {\n      btnIniciar.disabled = enEjecucion;\n      btnIniciar.style.opacity = enEjecucion ? '0.5' : '1';\n    }\n    if (btnDetener) {\n      btnDetener.disabled = !enEjecucion;\n      btnDetener.style.opacity = enEjecucion ? '1' : '0.5';\n    }\n  }\n\n  function actualizarProgresoUI() {\n    const total = STATE.registros.length;\n    const actual = STATE.indiceActual;\n    const pct = total > 0 ? Math.round((actual / total) * 100) : 0;\n\n    const bar = document.getElementById('sisvan-progreso-bar');\n    if (bar) bar.style.width = `${pct}%`;\n\n    const lbl = document.getElementById('sisvan-progreso-label');\n    if (lbl) lbl.textContent = `Progreso: ${actual} / ${total}`;\n\n    const lblPct = document.getElementById('sisvan-porcentaje');\n    if (lblPct) lblPct.textContent = `${pct}%`;\n\n    const sEx = document.getElementById('sisvan-stat-exitos');\n    if (sEx) sEx.textContent = STATE.stats.exitosos;\n\n    const sNo = document.getElementById('sisvan-stat-noenc');\n    if (sNo) sNo.textContent = STATE.stats.noEncontrados;\n\n    const sErr = document.getElementById('sisvan-stat-err');\n    if (sErr) sErr.textContent = STATE.stats.errores;\n  }\n\n  // ============================================================================\n  // 12. INICIALIZACIÓN\n  // ============================================================================\n  crearPanelFlotante();\n  console.log('%c[SISVAN] Panel de consola inyectado exitosamente.', 'color: #10b981; font-weight: bold; font-size: 13px;');\n  console.log('%cPara ejecutar el diagnóstico escribe: diagnostico()', 'color: #38bdf8;');\n})();\n";
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const codeDisplay = document.getElementById("code-display");
+      if (codeDisplay) {
+        codeDisplay.textContent = SCRIPT_SOURCE.slice(0, 1500) + "\n\n/* ... [ resto del código: " + (SCRIPT_SOURCE.length - 1500) + " caracteres listos para copiar ] ... */";
+      }
+    });
+
+    function mostrarToast(msg) {
+      const toast = document.getElementById("toast");
+      toast.textContent = msg || "✓ ¡Script copiado al portapapeles!";
+      toast.style.display = "block";
+      setTimeout(() => {
+        toast.style.display = "none";
+      }, 3500);
+    }
+
+    function copiarScript() {
+      navigator.clipboard.writeText(SCRIPT_SOURCE).then(() => {
+        mostrarToast("✓ ¡Script copiado! Pégalo en la consola (F12) de appb.saludcapital.gov.co");
+      }).catch(err => {
+        // Fallback para navegadores antiguos
+        const ta = document.createElement("textarea");
+        ta.value = SCRIPT_SOURCE;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+        mostrarToast("✓ ¡Script copiado al portapapeles!");
+      });
+    }
+
+    function descargarScript() {
+      const blob = new Blob([SCRIPT_SOURCE], { type: "application/javascript;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "consulta-consola.js";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function descargarCsvEjemplo() {
+      const lineas = [
+        "consecutivo;codigo",
+        "1;1023456789",
+        "2;1098765432",
+        "3;1011122233",
+        "4;1044455566",
+        "5;1077788899"
+      ];
+      const blob = new Blob(["\uFEFF" + lineas.join("\r\n")], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "pacientes_ejemplo.csv";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+  </script>
+</body>
+</html>

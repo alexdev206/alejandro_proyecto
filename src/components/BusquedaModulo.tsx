@@ -57,8 +57,46 @@ export const BusquedaModulo: React.FC<BusquedaModuloProps> = ({
 }) => {
   const { user } = useAuth();
 
-  // Sub-pestañas dentro del módulo unificado: 'pai' (PAIWEB) o 'comprobador' (ADRES/SDS) o 'cruce'
-  const [subTab, setSubTab] = useState<'pai' | 'comprobador' | 'cruce'>('pai');
+  // Sub-pestañas dentro del módulo unificado: 'pai' (PAIWEB), 'comprobador' (ADRES/SDS), 'cruce' o 'script_consola' (F12 sin instalación)
+  const [subTab, setSubTab] = useState<'pai' | 'comprobador' | 'cruce' | 'script_consola'>('pai');
+  const [copiedConsoleScript, setCopiedConsoleScript] = useState<boolean>(false);
+
+  const handleCopyConsoleScript = async () => {
+    try {
+      const res = await fetch('/consulta-consola.js');
+      if (res.ok) {
+        const text = await res.text();
+        await navigator.clipboard.writeText(text);
+        setCopiedConsoleScript(true);
+        setTimeout(() => setCopiedConsoleScript(false), 3500);
+        if (onTriggerToast) onTriggerToast('✓ ¡Script de consola copiado! Pégalo con Ctrl+V en Chrome F12.');
+        return;
+      }
+    } catch (_e) {}
+    // Fallback si no está el fetch
+    window.open('/consulta-consola.js', '_blank');
+  };
+
+  const handleDownloadSampleCsv = () => {
+    const lineas = [
+      'consecutivo;codigo',
+      '1;1023456789',
+      '2;1098765432',
+      '3;1011122233',
+      '4;1044455566',
+      '5;1077788899'
+    ];
+    const blob = new Blob(['\uFEFF' + lineas.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'pacientes_ejemplo.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    if (onTriggerToast) onTriggerToast('✓ CSV de ejemplo descargado (pacientes_ejemplo.csv)');
+  };
 
   // Credenciales y sesión del Operador PAIWEB solicitadas directamente dentro del aplicativo
   const [paiOperatorUser, setPaiOperatorUser] = useState<string>(() => {
@@ -848,6 +886,24 @@ export const BusquedaModulo: React.FC<BusquedaModuloProps> = ({
             <Zap className="w-4 h-4 text-emerald-600 shrink-0" />
             <span>Pestaña 3: Cruce Integral</span>
           </button>
+
+          <button
+            type="button"
+            onClick={() => setSubTab('script_consola')}
+            className={`flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center space-x-2 cursor-pointer ${
+              subTab === 'script_consola'
+                ? 'bg-emerald-600 text-white shadow-xs border border-emerald-500'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+            }`}
+          >
+            <Terminal className="w-4 h-4 shrink-0" />
+            <span>Pestaña 4: Script Consola F12</span>
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+              subTab === 'script_consola' ? 'bg-emerald-700 text-white' : 'bg-emerald-100 text-emerald-800'
+            }`}>
+              Sin Instalación
+            </span>
+          </button>
         </div>
       </div>
 
@@ -932,8 +988,197 @@ export const BusquedaModulo: React.FC<BusquedaModuloProps> = ({
         </div>
       )}
 
-      {/* 4. Configuration & Input Selection Bar */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* 4. SECCIÓN ESPECÍFICA SI SUBTAB ES SCRIPT CONSOLA F12 */}
+      {subTab === 'script_consola' ? (
+        <div className="space-y-6">
+          {/* Tarjeta Principal de Presentación */}
+          <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 text-white border border-slate-700 rounded-2xl p-6 shadow-md space-y-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  <Terminal className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Cero Instalación · 100% Chrome F12</span>
+                </div>
+                <h3 className="text-xl font-extrabold text-white tracking-tight">
+                  SISVAN Bogotá · Script Autocontenido de Consola (F12)
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
+                  Diseñado para operadores en computadores institucionales de la <b>Secretaría de Salud de Bogotá</b> donde está restringida la instalación de programas (sin Node.js ni extensiones). Ejecuta la consulta de <b>PAIWEB y Comprobador de Derechos (ADRES)</b> directamente inyectando una interfaz flotante en la pestaña oficial.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={handleCopyConsoleScript}
+                  className="inline-flex items-center justify-center space-x-2 px-5 py-3 rounded-xl font-bold text-sm bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-all shadow-lg shadow-emerald-500/20 cursor-pointer active:scale-95"
+                >
+                  <Copy className="w-4 h-4 text-slate-950" />
+                  <span>{copiedConsoleScript ? '✓ ¡Script Copiado al Portapapeles!' : 'Copiar Script para F12'}</span>
+                </button>
+                <a
+                  href="https://appb.saludcapital.gov.co"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center justify-center space-x-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-slate-600 transition-all cursor-pointer"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>Ir a appb.saludcapital.gov.co ↗</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Banner de Privacidad */}
+            <div className="p-3.5 bg-slate-950/60 border border-emerald-500/30 rounded-xl text-xs text-slate-300 flex items-start space-x-2.5">
+              <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-bold text-emerald-300">Garantía de Privacidad y Seguridad Institucional:</p>
+                <p className="text-[11.5px] text-slate-400 mt-0.5">
+                  El script funciona <b>100% dentro de tu navegador</b> en el origen de Salud Capital. No realiza peticiones a servidores externos, no envía datos a internet, no usa CDNs externos ni analíticas, y no guarda contraseñas. Todo el procesamiento y la descarga del CSV son estrictamente locales.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Barra de Acciones y Descargas */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <a
+              href="/consulta-consola.js"
+              download="consulta-consola.js"
+              className="p-4 bg-white border border-slate-200 rounded-xl hover:border-slate-300 transition-all shadow-2xs flex items-center space-x-3 group"
+            >
+              <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                <FileDown className="w-5 h-5" />
+              </div>
+              <div className="overflow-hidden">
+                <p className="text-xs font-bold text-slate-900 truncate">Descargar consulta-consola.js</p>
+                <p className="text-[11px] text-slate-500">Archivo JavaScript puro autocontenido</p>
+              </div>
+            </a>
+
+            <a
+              href="/standalone.html"
+              download="index.html"
+              className="p-4 bg-white border border-slate-200 rounded-xl hover:border-slate-300 transition-all shadow-2xs flex items-center space-x-3 group"
+            >
+              <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                <FileSpreadsheet className="w-5 h-5" />
+              </div>
+              <div className="overflow-hidden">
+                <p className="text-xs font-bold text-slate-900 truncate">Descargar index.html (Offline)</p>
+                <p className="text-[11px] text-slate-500">Página única publicable sin servidor</p>
+              </div>
+            </a>
+
+            <button
+              type="button"
+              onClick={handleDownloadSampleCsv}
+              className="p-4 bg-white border border-slate-200 rounded-xl hover:border-slate-300 transition-all shadow-2xs flex items-center space-x-3 text-left group cursor-pointer"
+            >
+              <div className="w-10 h-10 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                <Download className="w-5 h-5" />
+              </div>
+              <div className="overflow-hidden">
+                <p className="text-xs font-bold text-slate-900 truncate">Descargar CSV de Ejemplo</p>
+                <p className="text-[11px] text-slate-500">5 códigos de prueba listos para test</p>
+              </div>
+            </button>
+          </div>
+
+          {/* Guía Paso a Paso */}
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs space-y-5">
+            <h4 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center space-x-2">
+              <span className="w-6 h-6 rounded-md bg-emerald-600 text-white flex items-center justify-center text-xs">✓</span>
+              <span>Guía Rápida de Ejecución en 5 Pasos</span>
+            </h4>
+
+            <div className="space-y-4">
+              {/* Paso 1 */}
+              <div className="flex gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200">
+                <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center shrink-0 text-sm">1</div>
+                <div className="space-y-1">
+                  <h5 className="text-xs sm:text-sm font-bold text-slate-900">Ingresar a Salud Capital</h5>
+                  <p className="text-xs text-slate-600">
+                    Abre Google Chrome y dirígete a <a href="https://appb.saludcapital.gov.co" target="_blank" rel="noreferrer" className="text-blue-600 font-bold underline">https://appb.saludcapital.gov.co</a>. Si vas a consultar PAIWEB, inicia sesión previamente en <code>/pai/inicio/login.aspx</code> con tu usuario institucional.
+                  </p>
+                </div>
+              </div>
+
+              {/* Paso 2 */}
+              <div className="flex gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200">
+                <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center shrink-0 text-sm">2</div>
+                <div className="space-y-1">
+                  <h5 className="text-xs sm:text-sm font-bold text-slate-900">Abrir la Consola de Desarrollador (F12)</h5>
+                  <p className="text-xs text-slate-600">
+                    Presiona la tecla <b>F12</b> en tu teclado (o <kbd className="px-1.5 py-0.5 bg-slate-200 rounded font-mono text-[11px]">Ctrl+Shift+I</kbd>) y selecciona la pestaña superior llamada <b>Consola (Console)</b>.
+                  </p>
+                </div>
+              </div>
+
+              {/* Paso 3: ALERTA IMPORTANTE CHROME */}
+              <div className="flex gap-4 p-4 rounded-xl bg-amber-50/90 border border-amber-300">
+                <div className="w-8 h-8 rounded-full bg-amber-200 text-amber-900 font-bold flex items-center justify-center shrink-0 text-sm">3</div>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <AlertTriangle className="w-4 h-4 text-amber-600" />
+                    <h5 className="text-xs sm:text-sm font-bold text-amber-950">Advertencia de Chrome: Desbloqueo "allow pasting"</h5>
+                  </div>
+                  <p className="text-xs text-amber-900">
+                    Si es la primera vez que pegas código en la consola, Google Chrome bloqueará el pegado con una advertencia en letras rojas. Para desbloquearlo:
+                  </p>
+                  <div className="p-2.5 bg-amber-100/80 border border-amber-300 rounded-lg text-xs font-mono text-amber-950 space-y-1">
+                    <p>1. Escribe en la consola: <b className="text-black bg-white px-1.5 py-0.5 rounded border border-amber-300">allow pasting</b> (o <b className="text-black bg-white px-1.5 py-0.5 rounded border border-amber-300">permitir pegar</b>)</p>
+                    <p>2. Presiona la tecla <kbd className="bg-white px-1.5 py-0.5 rounded border border-amber-300 text-slate-800">Enter</kbd>.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Paso 4 */}
+              <div className="flex gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200">
+                <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center shrink-0 text-sm">4</div>
+                <div className="space-y-1">
+                  <h5 className="text-xs sm:text-sm font-bold text-slate-900">Pegar el script y presionar Enter</h5>
+                  <p className="text-xs text-slate-600">
+                    Pulsa el botón <b>"Copiar Script para F12"</b> de arriba, haz clic en la consola de Chrome, presiona <kbd className="px-1.5 py-0.5 bg-slate-200 rounded font-mono text-[11px]">Ctrl+V</kbd> y presiona <kbd className="px-1.5 py-0.5 bg-slate-200 rounded font-mono text-[11px]">Enter</kbd>. Aparecerá de inmediato el <b>Panel Flotante SISVAN</b> sobre la página.
+                  </p>
+                </div>
+              </div>
+
+              {/* Paso 5 */}
+              <div className="flex gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200">
+                <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 font-bold flex items-center justify-center shrink-0 text-sm">5</div>
+                <div className="space-y-1">
+                  <h5 className="text-xs sm:text-sm font-bold text-slate-900">Cargar CSV, consultar y descargar</h5>
+                  <p className="text-xs text-slate-600">
+                    Carga tu CSV con columnas <code>consecutivo</code> y <code>codigo</code>, selecciona el portal (PAI Menores, Mayores, Auto o Comprobador) y pulsa <b>"Iniciar"</b>. Podrás ver el cronómetro en vivo y descargar el resultado en CSV con formato UTF-8 y delimitador <code>;</code> listo para Excel.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Mini-Diagnóstico */}
+          <div className="bg-slate-900 text-white border border-slate-800 rounded-2xl p-5 shadow-xs space-y-3">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 rounded-lg bg-slate-800 text-cyan-400 flex items-center justify-center shrink-0">
+                <Search className="w-4 h-4" />
+              </div>
+              <div>
+                <h4 className="text-xs sm:text-sm font-bold text-white">Función de Mini-Diagnóstico Integrada</h4>
+                <p className="text-[11px] text-slate-400">Verifica cookies, iframes, WebForms y conectividad con el portal distrital.</p>
+              </div>
+            </div>
+            <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 font-mono text-xs text-slate-300">
+              <p className="text-emerald-400">// Puedes invocar el diagnóstico en cualquier momento escribiendo en la consola:</p>
+              <p className="mt-1 font-bold text-white">diagnostico();</p>
+              <p className="mt-2 text-[11px] text-slate-400">O haciendo clic en el botón <span className="text-cyan-400 font-bold">🔍 Diag</span> directamente en el panel flotante.</p>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* 4. Configuration & Input Selection Bar */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column: Input Source */}
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-4">
           <div className="flex items-center justify-between">
@@ -1553,6 +1798,8 @@ export const BusquedaModulo: React.FC<BusquedaModuloProps> = ({
             </table>
           </div>
         </div>
+      )}
+        </>
       )}
     </div>
   );

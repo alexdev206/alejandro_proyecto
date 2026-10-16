@@ -1439,6 +1439,36 @@ app.get('/api/health', (_req, res) => {
   res.status(200).json({ status: 'ok', port: PORT, uptime: process.uptime() });
 });
 
+// Endpoints directos para el script de consola y la versión HTML sin servidor (PC institucional)
+app.get('/consulta-consola.js', (_req, res) => {
+  const filePath = path.join(process.cwd(), 'consulta-consola.js');
+  if (fs.existsSync(filePath)) {
+    res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    return res.sendFile(filePath);
+  }
+  return res.status(404).send('Script no encontrado');
+});
+
+app.get('/standalone.html', (_req, res) => {
+  const filePath = path.join(process.cwd(), 'public', 'standalone.html');
+  if (fs.existsSync(filePath)) {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    return res.sendFile(filePath);
+  }
+  return res.status(404).send('Página autónoma no encontrada');
+});
+
+app.get('/api/script/download', (_req, res) => {
+  const filePath = path.join(process.cwd(), 'consulta-consola.js');
+  res.download(filePath, 'consulta-consola.js');
+});
+
+app.get('/api/html/download', (_req, res) => {
+  const filePath = path.join(process.cwd(), 'public', 'standalone.html');
+  res.download(filePath, 'index.html');
+});
+
 // Middleware global de errores de Express: SIEMPRE devuelve JSON (nunca HTML)
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   if (err.type === 'entity.too.large' || err.status === 413 || err.statusCode === 413) {
