@@ -34,14 +34,7 @@ const PORT = parseInt(process.env.PORT || '3000', 10);
 // se sanea automáticamente a "0.0.0.0" para evitar el error fatal "getaddrinfo EAI_AGAIN admin".
 function getValidHost(): string {
   const envHost = (process.env.HOST || '').trim();
-  if (!envHost || envHost === 'admin') {
-    return '0.0.0.0';
-  }
-  // En producción o entornos Cloud Run (donde PORT viene inyectado o NODE_ENV=production), siempre usar 0.0.0.0
-  if (process.env.NODE_ENV === 'production' || process.env.K_SERVICE || process.env.PORT) {
-    return '0.0.0.0';
-  }
-  if (['0.0.0.0', '127.0.0.1', 'localhost', '::'].includes(envHost)) {
+  if (envHost === '0.0.0.0' || envHost === '::') {
     return envHost;
   }
   return '0.0.0.0';
